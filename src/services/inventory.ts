@@ -1,0 +1,58 @@
+// src/services/inventory.ts
+import { apiClient } from "@/lib/api";
+import type { Product, StockMovement, PaginatedResponse } from "@/types";
+
+export interface ProductPayload {
+  sku: string;
+  name: string;
+  min_stock: number;
+  unit_cost: number;
+}
+
+export interface StockMovementPayload {
+  movement_type: "entry" | "exit";
+  qty: number;
+  note?: string;
+}
+
+export const inventoryService = {
+  list: (
+    page = 1,
+    search = "",
+    pageSize = 10,
+  ): Promise<PaginatedResponse<Product>> =>
+    apiClient
+      .get("/api/v1/products", {
+        params: { page, page_size: pageSize, search: search || undefined },
+      })
+      .then((r) => r.data),
+
+  getById: (id: number): Promise<Product> =>
+    apiClient.get(`/api/v1/products/${id}`).then((r) => r.data),
+
+  create: (data: ProductPayload): Promise<Product> =>
+    apiClient.post("/api/v1/products", { product: data }).then((r) => r.data),
+
+  update: (id: number, data: ProductPayload): Promise<Product> =>
+    apiClient
+      .patch(`/api/v1/products/${id}`, { product: data })
+      .then((r) => r.data),
+
+  remove: (id: number): Promise<void> =>
+    apiClient.delete(`/api/v1/products/${id}`).then((r) => r.data),
+
+  listMovements: (productId: number): Promise<StockMovement[]> =>
+    apiClient
+      .get(`/api/v1/products/${productId}/stock_movements`)
+      .then((r) => r.data),
+
+  addMovement: (
+    productId: number,
+    data: StockMovementPayload,
+  ): Promise<StockMovement> =>
+    apiClient
+      .post(`/api/v1/products/${productId}/stock_movements`, {
+        stock_movement: data,
+      })
+      .then((r) => r.data),
+};
