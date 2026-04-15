@@ -1,7 +1,7 @@
 // src/lib/api.ts
 import axios from "axios";
 import { toast } from "sonner";
-import { getApiT } from "@/lib/api-i18n";
+import { getApiT, getLocale } from "@/lib/api-i18n";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -10,10 +10,13 @@ export const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Inyecta el token en cada request
+// Inyecta el token, el idioma y la empresa activa en cada request
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  config.headers["locale"] = getLocale();
+  const companyId = localStorage.getItem("selected_company_id");
+  if (companyId) config.headers["X-Company-Id"] = companyId;
   return config;
 });
 

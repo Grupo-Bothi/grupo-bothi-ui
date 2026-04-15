@@ -3,7 +3,7 @@
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
@@ -33,7 +33,7 @@ export default function InventarioPage() {
   const [movementProduct, setMovementProduct] = useState<Product | null>(null);
   const [movementType, setMovementType] = useState<"entry" | "exit" | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["products", page, PAGE_SIZE, debouncedSearch],
     queryFn: () => inventoryService.list(page, debouncedSearch, PAGE_SIZE),
   });
@@ -82,10 +82,15 @@ export default function InventarioPage() {
             )}
           </p>
         </div>
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="gap-2">
-          <Plus size={15} />
-          {t("new")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
+          </Button>
+          <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="gap-2">
+            <Plus size={15} />
+            {t("new")}
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

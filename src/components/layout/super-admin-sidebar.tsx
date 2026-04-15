@@ -1,38 +1,28 @@
-// src/components/layout/sidebar.tsx
+// src/components/layout/super-admin-sidebar.tsx
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  Users,
-  Package,
-  LayoutDashboard,
-  Building2,
-  ClipboardList,
-} from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { Building2, Users, ShieldCheck } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+export function SuperAdminSidebar() {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const locale = useLocale();
-  const { user } = useAuthStore();
   const { open } = useSidebar();
 
   const NAV = [
     {
-      href: `/${locale}/dashboard`,
-      label: t("dashboard"),
-      icon: LayoutDashboard,
+      href: `/${locale}/empresas`,
+      label: t("companies"),
+      icon: Building2,
     },
-    { href: `/${locale}/empleados`, label: t("employees"), icon: Users },
-    { href: `/${locale}/inventario`, label: t("inventory"), icon: Package },
     {
-      href: `/${locale}/ordenes`,
-      label: t("orders"),
-      icon: ClipboardList,
+      href: `/${locale}/usuarios`,
+      label: t("users"),
+      icon: Users,
     },
   ];
 
@@ -49,10 +39,10 @@ export function Sidebar() {
           open ? "px-5" : "justify-center",
         )}
       >
-        <Building2 size={18} className="text-zinc-500 shrink-0" />
+        <ShieldCheck size={18} className="text-zinc-500 shrink-0" />
         {open && (
           <span className="ml-2 font-medium text-sm text-zinc-800 truncate">
-            {user?.companies?.[0]?.name || "Grupo Bothi"}
+            Super Admin
           </span>
         )}
       </div>

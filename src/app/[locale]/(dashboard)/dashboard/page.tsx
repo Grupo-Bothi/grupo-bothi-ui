@@ -1,19 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/[locale]/(dashboard)/dashboard/page.tsx
 "use client";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import { Users, Package, AlertTriangle, TrendingUp } from "lucide-react";
+import {
+  Users,
+  Package,
+  AlertTriangle,
+  TrendingUp,
+  RefreshCw,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: employees } = useQuery({
     queryKey: ["employees"],
-    queryFn: () => apiClient.get("/api/v1/employees").then((r) => r.data),
+    queryFn: () =>
+      apiClient.get("/api/v1/employees?status=active").then((r) => r.data),
   });
 
   const { data: products } = useQuery({
@@ -23,12 +33,25 @@ export default function DashboardPage() {
 
   const employeeList = employees?.results ?? employees ?? [];
   const productList = products?.results ?? products ?? [];
+  const activeEmployees = employeeList.length;
   const lowStock = productList.filter((p: any) => p.low_stock).length;
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["employees"] }),
+        qc.refetchQueries({ queryKey: ["products"] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const stats = [
     {
       label: t("activeEmployees"),
-      value: employees?.info?.total ?? employeeList.length ?? "—",
+      value: activeEmployees,
       icon: Users,
       color: "text-blue-600",
       bg: "bg-blue-50",
@@ -49,7 +72,7 @@ export default function DashboardPage() {
     },
     {
       label: t("activePlan"),
-      value: user?.company?.plan ?? "—",
+      value: user?.companies?.[0]?.plan ?? "—",
       icon: TrendingUp,
       color: "text-purple-600",
       bg: "bg-purple-50",
@@ -58,11 +81,20 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-xl font-medium text-zinc-900">
-          {t("welcome", { name: user?.first_name ?? "" })}
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">{t("subtitle")}</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-medium text-zinc-900">
+            {t("welcome", { name: user?.first_name ?? "" })}
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">{t("subtitle")}</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors disabled:pointer-events-none"
+        >
+          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+        </button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (

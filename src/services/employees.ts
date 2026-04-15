@@ -7,7 +7,19 @@ export interface EmployeePayload {
   position?: string;
   department?: string;
   salary?: number;
+  email?: string;
+  phone?: string;
   status: "active" | "inactive";
+}
+
+export interface CreateEmployeeResponse extends Employee {
+  user: {
+    id: number;
+    email: string;
+    role: string;
+    active: boolean;
+  };
+  temp_password: string;
 }
 
 export const employeesService = {
@@ -21,7 +33,7 @@ export const employeesService = {
   getById: (id: number): Promise<Employee> =>
     apiClient.get(`/api/v1/employees/${id}`).then((r) => r.data),
 
-  create: (data: EmployeePayload): Promise<Employee> =>
+  create: (data: EmployeePayload): Promise<CreateEmployeeResponse> =>
     apiClient.post("/api/v1/employees", { employee: data }).then((r) => r.data),
 
   update: (id: number, data: EmployeePayload): Promise<Employee> =>

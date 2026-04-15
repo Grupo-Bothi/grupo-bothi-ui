@@ -5,8 +5,13 @@ import type { Product, StockMovement, PaginatedResponse } from "@/types";
 export interface ProductPayload {
   sku: string;
   name: string;
+  stock?: number;
   min_stock: number;
   unit_cost: number;
+  price?: number;
+  category?: string;
+  description?: string;
+  available?: boolean;
 }
 
 export interface StockMovementPayload {
@@ -40,6 +45,9 @@ export const inventoryService = {
 
   remove: (id: number): Promise<void> =>
     apiClient.delete(`/api/v1/products/${id}`).then((r) => r.data),
+
+  menu: (): Promise<{ menu: import("@/types").MenuCategory[] }> =>
+    apiClient.get("/api/v1/products/menu").then((r) => r.data),
 
   listMovements: (productId: number): Promise<StockMovement[]> =>
     apiClient

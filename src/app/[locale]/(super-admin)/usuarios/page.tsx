@@ -1,4 +1,4 @@
-// src/app/[locale]/(dashboard)/empleados/page.tsx
+// src/app/[locale]/(super-admin)/usuarios/page.tsx
 "use client";
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
@@ -8,17 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
-import { EmployeeForm } from "@/components/employees/employee-form";
-import { EmployeeDeleteDialog } from "@/components/employees/employee-delete-dialog";
-import { getEmployeeColumns } from "@/components/employees/columns";
-import { employeesService } from "@/services/employees";
+import { UserForm } from "@/components/admin-users/user-form";
+import { UserDeleteDialog } from "@/components/admin-users/user-delete-dialog";
+import { getAdminUserColumns } from "@/components/admin-users/columns";
+import { adminUsersService } from "@/services/admin-users";
 import { usePagination } from "@/hooks/use-pagination";
-import type { Employee } from "@/types";
+import type { AdminUser } from "@/types";
 
 const PAGE_SIZE = 10;
 
-export default function EmpleadosPage() {
-  const t = useTranslations("employees");
+export default function UsuariosPage() {
+  const t = useTranslations("adminUsers");
   const tc = useTranslations("common");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -26,15 +26,15 @@ export default function EmpleadosPage() {
   const { page, goTo, reset } = usePagination();
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Employee | null>(null);
-  const [deleting, setDeleting] = useState<Employee | null>(null);
+  const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState<AdminUser | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["employees", page, PAGE_SIZE, debouncedSearch],
-    queryFn: () => employeesService.list(page, debouncedSearch, PAGE_SIZE),
+    queryKey: ["admin-users", page, PAGE_SIZE, debouncedSearch],
+    queryFn: () => adminUsersService.list(page, debouncedSearch, PAGE_SIZE),
   });
 
-  const employees: Employee[] = data?.results ?? [];
+  const users: AdminUser[] = data?.results ?? [];
 
   function handleSearch(value: string) {
     setSearch(value);
@@ -52,9 +52,12 @@ export default function EmpleadosPage() {
 
   const columns = useMemo(
     () =>
-      getEmployeeColumns(t, tc, {
-        onEdit: (emp) => { setEditing(emp); setFormOpen(true); },
-        onDelete: (emp) => setDeleting(emp),
+      getAdminUserColumns(t, tc, {
+        onEdit: (user) => {
+          setEditing(user);
+          setFormOpen(true);
+        },
+        onDelete: (user) => setDeleting(user),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -83,7 +86,10 @@ export default function EmpleadosPage() {
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+        />
         <Input
           className="pl-8"
           placeholder={t("searchPlaceholder")}
@@ -95,7 +101,7 @@ export default function EmpleadosPage() {
       {/* Table */}
       <DataTable
         columns={columns}
-        data={employees}
+        data={users}
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
         loadingMessage={tc("loading")}
@@ -108,15 +114,11 @@ export default function EmpleadosPage() {
       )}
 
       {/* Form Sheet */}
-      <EmployeeForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        employee={editing}
-      />
+      <UserForm open={formOpen} onOpenChange={setFormOpen} user={editing} />
 
       {/* Delete Dialog */}
-      <EmployeeDeleteDialog
-        employee={deleting}
+      <UserDeleteDialog
+        user={deleting}
         onOpenChange={(open) => !open && setDeleting(null)}
       />
     </div>

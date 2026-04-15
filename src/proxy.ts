@@ -1,4 +1,4 @@
-// src/proxy.ts
+// src/middleware.ts
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
@@ -6,23 +6,41 @@ import { routing } from "@/i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 const PUBLIC_ROUTES = ["/login"];
+const EMPLOYEE_ROUTES = ["/mis-ordenes", "/mi-perfil"];
+const ADMIN_ROUTES = ["/dashboard", "/empleados", "/inventario", "/ordenes"];
 
-export function proxy(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const localeMatch = pathname.match(/^\/(es|en)/);
+  const locale = localeMatch?.[1] ?? "es";
+  const bare = pathname.replace(/^\/(es|en)/, "") || "/";
 
-  // Extrae el locale del path si existe (/es/login → /login)
-  const pathnameWithoutLocale = pathname.replace(/^\/(es|en)/, "") || "/";
-  const isPublic = PUBLIC_ROUTES.includes(pathnameWithoutLocale);
   const token = request.cookies.get("auth_token")?.value;
+  const role = request.cookies.get("user_role")?.value;
+  const isPublic = PUBLIC_ROUTES.includes(bare);
 
   if (!token && !isPublic) {
-    const locale = pathname.match(/^\/(es|en)/)?.[1] ?? "es";
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
   if (token && isPublic) {
-    const locale = pathname.match(/^\/(es|en)/)?.[1] ?? "es";
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+    const dest =
+      role === "super_admin"
+        ? `/${locale}/empresas`
+        : role === "staff"
+          ? `/${locale}/mis-ordenes`
+          : `/${locale}/dashboard`;
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
+  // Staff solo puede ver sus propias órdenes
+  if (token && role === "staff") {
+    const isAdminRoute = ADMIN_ROUTES.some((r) => bare.startsWith(r));
+    if (isAdminRoute) {
+      return NextResponse.redirect(
+        new URL(`/${locale}/mis-ordenes`, request.url),
+      );
+    }
   }
 
   return intlMiddleware(request);

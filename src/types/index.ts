@@ -5,9 +5,9 @@ export interface User {
   first_name: string;
   middle_name?: string;
   last_name: string;
-  role: "staff" | "manager" | "admin" | "owner";
+  role: "staff" | "manager" | "admin" | "owner" | "super_admin";
   active: boolean;
-  company?: Company;
+  companies: Company[];
 }
 
 export interface Company {
@@ -15,6 +15,22 @@ export interface Company {
   name: string;
   slug: string;
   plan: "starter" | "business" | "enterprise";
+  active: boolean;
+  users_count?: number;
+  created_at: string;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  second_last_name: string;
+  phone: string;
+  role: "staff" | "manager" | "admin" | "owner";
+  active: boolean;
+  companies: Pick<Company, "id" | "name" | "slug">[];
+  created_at: string;
 }
 
 export interface Employee {
@@ -23,6 +39,8 @@ export interface Employee {
   position?: string;
   department?: string;
   salary?: number | string;
+  email?: string;
+  phone?: string;
   status: "active" | "inactive";
   created_at: string;
 }
@@ -45,6 +63,15 @@ export interface Product {
   min_stock: number;
   unit_cost: number;
   low_stock: boolean;
+  price?: number;
+  category?: string;
+  description?: string;
+  available?: boolean;
+}
+
+export interface MenuCategory {
+  category: string;
+  items: Product[];
 }
 
 export interface StockMovement {
@@ -73,4 +100,36 @@ export interface PaginatedResponse<T> {
 export interface ApiError {
   message: string;
   details?: string | string[];
+}
+
+export interface WorkOrderItem {
+  id: number;
+  description: string;
+  quantity: number;
+  unit?: string;
+  unit_price?: number;
+  subtotal?: number;
+  status: "pending" | "completed";
+  position: number;
+  product_id?: number;
+  product?: Pick<Product, "id" | "name" | "sku">;
+  completed_at?: string;
+}
+
+export interface WorkOrder {
+  id: number;
+  title: string;
+  description?: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "in_progress" | "in_review" | "completed";
+  due_date?: string;
+  completed_at?: string;
+  notes?: string;
+  progress: number;
+  total?: number;
+  employee?: { id: number; name: string };
+  items?: WorkOrderItem[];
+  items_count: number;
+  items_done: number;
+  created_at: string;
 }

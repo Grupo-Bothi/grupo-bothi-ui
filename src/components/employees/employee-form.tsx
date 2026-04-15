@@ -41,6 +41,8 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
     position: z.string().optional(),
     department: z.string().optional(),
     salary: z.coerce.number().positive().optional().or(z.literal("")),
+    email: z.string().email().optional().or(z.literal("")),
+    phone: z.string().optional(),
     status: z.enum(["active", "inactive"]),
   });
 
@@ -53,12 +55,15 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
 
   useEffect(() => {
     if (!open) return;
+    if (isEdit && !employeeData) return;
     const source = isEdit ? employeeData : null;
     reset({
       name: source?.name ?? "",
       position: source?.position ?? "",
       department: source?.department ?? "",
       salary: source?.salary ? Number(source.salary) : "",
+      email: source?.email ?? "",
+      phone: source?.phone ?? "",
       status: source?.status ?? "active",
     });
   }, [open, employeeData, isEdit, reset]);
@@ -70,6 +75,8 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
         position: values.position || undefined,
         department: values.department || undefined,
         salary: values.salary ? Number(values.salary) : undefined,
+        email: values.email || undefined,
+        phone: values.phone || undefined,
         status: values.status,
       };
       return isEdit
@@ -139,6 +146,24 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
                   <option value="active">{t("active")}</option>
                   <option value="inactive">{t("inactive")}</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("email")}</Label>
+                <Input
+                  type="email"
+                  placeholder={t("emailPlaceholder")}
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("phone")}</Label>
+                <Input placeholder={t("phonePlaceholder")} {...register("phone")} />
               </div>
             </div>
 

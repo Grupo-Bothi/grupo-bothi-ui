@@ -34,15 +34,20 @@ export function ProductForm({ open, onOpenChange, product }: ProductFormProps) {
   const schema = z.object({
     sku: z.string().min(1, t("skuRequired")),
     name: z.string().min(1, t("nameRequired")),
+    stock: z.coerce.number().int().min(0).optional(),
     min_stock: z.coerce.number().int().min(0),
     unit_cost: z.coerce.number().min(0),
+    price: z.coerce.number().min(0).optional(),
+    category: z.string().optional(),
+    description: z.string().optional(),
+    available: z.boolean().optional(),
   });
 
   type FormValues = z.infer<typeof schema>;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { sku: "", name: "", min_stock: 0, unit_cost: 0 },
+    defaultValues: { sku: "", name: "", stock: 0, min_stock: 0, unit_cost: 0, price: 0, category: "", description: "", available: true },
   });
 
   const { data: productData } = useQuery({
@@ -53,12 +58,18 @@ export function ProductForm({ open, onOpenChange, product }: ProductFormProps) {
 
   useEffect(() => {
     if (!open) return;
+    if (isEdit && !productData) return;
     const source = isEdit ? productData : null;
     reset({
       sku: source?.sku ?? "",
       name: source?.name ?? "",
+      stock: source?.stock ?? 0,
       min_stock: source?.min_stock ?? 0,
       unit_cost: source?.unit_cost ?? 0,
+      price: source?.price ?? 0,
+      category: source?.category ?? "",
+      description: source?.description ?? "",
+      available: source?.available ?? true,
     });
   }, [open, productData, isEdit, reset]);
 
@@ -118,14 +129,41 @@ export function ProductForm({ open, onOpenChange, product }: ProductFormProps) {
               )}
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("stock")}</Label>
+                <Input type="number" min="0" placeholder="0" {...register("stock")} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("minStock")}</Label>
+                <Input type="number" min="0" placeholder="0" {...register("min_stock")} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("price")}</Label>
+                <Input type="number" min="0" step="0.01" placeholder={t("pricePlaceholder")} {...register("price")} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">{t("category")}</Label>
+                <Input placeholder={t("categoryPlaceholder")} {...register("category")} />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-zinc-700">{t("minStock")}</Label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                {...register("min_stock")}
+              <Label className="text-xs font-medium text-zinc-700">{t("description")}</Label>
+              <textarea
+                {...register("description")}
+                rows={2}
+                placeholder={t("descriptionPlaceholder")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="available" {...register("available")} className="h-4 w-4 rounded border-zinc-300" />
+              <Label htmlFor="available" className="text-xs font-medium text-zinc-700 cursor-pointer">{t("available")}</Label>
             </div>
 
           </div>

@@ -9,7 +9,7 @@ type ApiMessages = typeof es.api;
 const LOCALES: Locale[] = ["es", "en"];
 const DEFAULT_LOCALE: Locale = "es";
 
-function getLocale(): Locale {
+export function getLocale(): Locale {
   const match = window.location.pathname.match(/^\/(es|en)/);
   const detected = match?.[1] as Locale | undefined;
   return detected && LOCALES.includes(detected) ? detected : DEFAULT_LOCALE;

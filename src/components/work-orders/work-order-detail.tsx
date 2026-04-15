@@ -1,0 +1,724 @@
+// src/components/work-orders/work-order-detail.tsx
+"use client";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
+import {
+  useUpdateStatus,
+  useToggleItem,
+  useAddItem,
+  useUpdateItem,
+  useDeleteItem,
+} from "@/hooks/use-work-orders";
+import { PriorityBadge } from "./priority-badge";
+import { StatusBadge } from "./status-badge";
+import { ProgressBar } from "./progress-bar";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { Check, Hash, Pencil, Trash2, Plus, Package, ChevronRight, Lock, Loader2 } from "lucide-react";
+import type { WorkOrder, WorkOrderItem, Product } from "@/types";
+
+const STATUSES = ["pending", "in_progress", "in_review", "completed"] as const;
+type OrderStatus = (typeof STATUSES)[number];
+
+const STATUS_LABEL: Record<OrderStatus, string> = {
+  pending: "Pendiente",
+  in_progress: "En progreso",
+  in_review: "En revisión",
+  completed: "Completada",
+};
+
+const STATUS_STYLE: Record<OrderStatus, { circle: string; label: string; sublabel: string }> = {
+  pending:     { circle: "bg-zinc-700",    label: "text-zinc-900",   sublabel: "text-zinc-400" },
+  in_progress: { circle: "bg-blue-500",    label: "text-blue-700",   sublabel: "text-blue-400" },
+  in_review:   { circle: "bg-purple-500",  label: "text-purple-700", sublabel: "text-purple-400" },
+  completed:   { circle: "bg-teal-500",    label: "text-teal-700",   sublabel: "text-teal-400" },
+};
+
+const selectCls =
+  "w-full h-9 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
+
+const textareaCls =
+  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring";
+
+interface ItemDraft {
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: string;
+  product_id?: number;
+}
+
+const emptyDraft = (): ItemDraft => ({
+  description: "",
+  quantity: 1,
+  unit: "",
+  unit_price: "",
+  product_id: undefined,
+});
+
+function draftFromItem(item: WorkOrderItem): ItemDraft {
+  return {
+    description: item.description,
+    quantity: item.quantity,
+    unit: item.unit ?? "",
+    unit_price: item.unit_price != null ? String(item.unit_price) : "",
+    product_id: item.product_id,
+  };
+}
+
+function ItemForm({
+  draft,
+  onChange,
+  onSave,
+  onCancel,
+  isSaving,
+  unitGroups,
+  productsByCategory,
+  saveLabel = "Guardar",
+}: {
+  draft: ItemDraft;
+  onChange: (d: ItemDraft) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isSaving: boolean;
+  unitGroups: Record<string, { id: number; key: string; name: string }[]>;
+  productsByCategory: Record<string, Product[]>;
+  saveLabel?: string;
+}) {
+  const allProducts = Object.values(productsByCategory).flat();
+
+  function handleProductChange(productId: string) {
+    const product = allProducts.find((p) => p.id === Number(productId));
+    onChange({
+      ...draft,
+      product_id: productId ? Number(productId) : undefined,
+      description: product?.name ?? draft.description,
+      unit_price:
+        product?.price != null
+          ? String(product.price)
+          : product?.unit_cost != null
+            ? String(product.unit_cost)
+            : draft.unit_price,
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Product picker */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-zinc-400">
+          <Package size={12} />
+          <span className="text-[11px] font-medium">Seleccionar producto (opcional)</span>
+        </div>
+        <select
+          value={draft.product_id ?? ""}
+          onChange={(e) => handleProductChange(e.target.value)}
+          className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:outline-none focus:ring-1 focus:ring-ring"
+        >
+          <option value="">Sin producto</option>
+          {Object.entries(productsByCategory).map(([cat, prods]) => (
+            <optgroup key={cat} label={cat}>
+              {prods.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.stock != null ? `  (${p.stock} en stock)` : ""}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
+      {/* Description */}
+      <Input
+        value={draft.description}
+        onChange={(e) => onChange({ ...draft, description: e.target.value })}
+        placeholder="Descripción de la tarea..."
+        autoFocus
+      />
+
+      {/* Qty + unit + price */}
+      <div className="grid grid-cols-[auto_1fr_1fr_1fr] items-center gap-2">
+        <span className="text-xs text-zinc-400 shrink-0">Cant.</span>
+        <Input
+          type="number"
+          min={1}
+          value={draft.quantity}
+          onChange={(e) =>
+            onChange({ ...draft, quantity: Math.max(1, Number(e.target.value)) })
+          }
+          className="text-center"
+        />
+        <select
+          value={draft.unit}
+          onChange={(e) => onChange({ ...draft, unit: e.target.value })}
+          className={selectCls}
+        >
+          <option value="">Unidad</option>
+          {Object.entries(unitGroups).map(([group, units]) => (
+            <optgroup key={group} label={group}>
+              {units.map((u) => (
+                <option key={u.id} value={u.key}>
+                  {u.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <div className="relative">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-400 pointer-events-none">
+            $
+          </span>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={draft.unit_price}
+            onChange={(e) => onChange({ ...draft, unit_price: e.target.value })}
+            placeholder="Precio"
+            className="pl-5"
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={isSaving || !draft.description.trim()}
+        >
+          {isSaving ? "Guardando..." : saveLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function WorkOrderDetail({
+  order: initialOrder,
+  open,
+  onClose,
+}: {
+  order: WorkOrder;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const t = useTranslations("workOrders");
+  const tc = useTranslations("common");
+
+  const { data: order, isLoading } = useQuery<WorkOrder>({
+    queryKey: ["work-orders", initialOrder.id],
+    queryFn: () =>
+      apiClient.get(`/api/v1/work_orders/${initialOrder.id}`).then((r) => r.data),
+    enabled: open,
+    staleTime: 0,
+  });
+  const current = order ?? initialOrder;
+
+  const { data: unitsData } = useQuery({
+    queryKey: ["units-catalog"],
+    queryFn: () => apiClient.get("/api/v1/units").then((r) => r.data),
+  });
+  const unitGroups: Record<string, { id: number; key: string; name: string }[]> =
+    unitsData?.units ?? {};
+
+  const { data: productsData } = useQuery({
+    queryKey: ["products-selector"],
+    queryFn: () =>
+      apiClient.get("/api/v1/products?page_size=100").then((r) => r.data),
+  });
+  const allProducts: Product[] = productsData?.results ?? productsData ?? [];
+  const productsByCategory = allProducts.reduce<Record<string, Product[]>>((acc, p) => {
+    const cat = p.category ?? "General";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(p);
+    return acc;
+  }, {});
+
+  const updateStatus = useUpdateStatus(current.id);
+  const toggleItem = useToggleItem(current.id);
+  const addItem = useAddItem(current.id);
+  const updateItem = useUpdateItem(current.id);
+  const deleteItem = useDeleteItem(current.id);
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<ItemDraft>(emptyDraft());
+  const [isAdding, setIsAdding] = useState(false);
+  const [newDraft, setNewDraft] = useState<ItemDraft>(emptyDraft());
+
+  const canEdit = current.status !== "completed";
+  const hasItems = (current.items?.length ?? 0) > 0;
+  const allItemsDone =
+    !hasItems || current.items!.every((i) => i.status === "completed");
+  const hasPendingItems =
+    hasItems && current.items!.some((i) => i.status !== "completed");
+
+  function isStatusBlocked(s: OrderStatus): boolean {
+    if (s === current.status) return false;
+    switch (s) {
+      case "pending":
+        // Irreversible: una vez que sale de pending no puede volver
+        return current.status !== "pending";
+      case "in_progress":
+      case "in_review":
+        // Solo disponible si existen tareas pendientes
+        return hasItems && !hasPendingItems;
+      case "completed":
+        // Solo si todas las tareas están completadas
+        return !allItemsDone;
+    }
+  }
+
+  function statusBlockedReason(s: OrderStatus): string | undefined {
+    if (!isStatusBlocked(s)) return undefined;
+    switch (s) {
+      case "pending":
+        return "El estado pendiente solo puede asignarse una vez";
+      case "in_progress":
+      case "in_review":
+        return "Agrega o deja tareas pendientes antes de cambiar a este estado";
+      case "completed":
+        return "Completa todas las tareas antes de marcar la orden como completada";
+    }
+  }
+
+  const orderTotal =
+    current.total != null
+      ? Number(current.total)
+      : (current.items?.reduce((sum, item) => {
+          const sub =
+            item.subtotal != null
+              ? Number(item.subtotal)
+              : item.unit_price != null
+                ? Number(item.unit_price) * item.quantity
+                : 0;
+          return sum + sub;
+        }, 0) ?? 0);
+
+  function startEdit(item: WorkOrderItem) {
+    setIsAdding(false);
+    setEditingId(item.id);
+    setEditDraft(draftFromItem(item));
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft(emptyDraft());
+  }
+
+  async function handleToggle(itemId: number) {
+    try {
+      await toggleItem.mutateAsync(itemId);
+    } catch {
+      toast.error(tc("error"));
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!editingId) return;
+    try {
+      await updateItem.mutateAsync({
+        itemId: editingId,
+        data: {
+          description: editDraft.description,
+          quantity: editDraft.quantity,
+          unit: editDraft.unit || undefined,
+          unit_price: editDraft.unit_price ? Number(editDraft.unit_price) : undefined,
+          ...(editDraft.product_id ? { product_id: editDraft.product_id } : {}),
+        },
+      });
+      cancelEdit();
+    } catch {
+      toast.error(tc("error"));
+    }
+  }
+
+  async function handleDelete(itemId: number) {
+    try {
+      await deleteItem.mutateAsync(itemId);
+      if (editingId === itemId) cancelEdit();
+    } catch {
+      toast.error(tc("error"));
+    }
+  }
+
+  async function handleAddItem() {
+    try {
+      await addItem.mutateAsync({
+        description: newDraft.description,
+        quantity: newDraft.quantity,
+        unit: newDraft.unit || undefined,
+        unit_price: newDraft.unit_price ? Number(newDraft.unit_price) : undefined,
+        ...(newDraft.product_id ? { product_id: newDraft.product_id } : {}),
+      });
+      setIsAdding(false);
+      setNewDraft(emptyDraft());
+    } catch {
+      toast.error(tc("error"));
+    }
+  }
+
+  async function handleStatusChange(status: string) {
+    if (status === current.status) return;
+    try {
+      await updateStatus.mutateAsync(status);
+      toast.success(t("statusUpdated"));
+    } catch {
+      toast.error(tc("error"));
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onClose}>
+      <SheetContent
+        side="right"
+        style={{ width: "min(92vw, 960px)", maxWidth: "none" }}
+        className="p-0 flex flex-col gap-0"
+      >
+        {/* Header */}
+        <SheetHeader className="px-6 py-4 border-b border-zinc-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <SheetTitle className="text-base flex-1">{current.title}</SheetTitle>
+            <span className="text-[11px] text-zinc-400 flex items-center gap-1 shrink-0">
+              <Hash size={11} />
+              {current.id}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <PriorityBadge priority={current.priority} />
+            <StatusBadge status={current.status} />
+          </div>
+        </SheetHeader>
+
+        {/* Two-column body */}
+        <div className="flex-1 grid grid-cols-[1fr_1.4fr] divide-x divide-zinc-100 overflow-hidden">
+
+          {/* ── Left: order info ── */}
+          <div className="overflow-y-auto px-6 py-6 space-y-5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+              Detalles de la orden
+            </p>
+
+            {/* Employee + Due date */}
+            {(current.employee || current.due_date) && (
+              <div className="grid grid-cols-1 gap-3">
+                {current.employee && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-zinc-500">{t("employee")}</p>
+                    <p className="text-sm text-zinc-800">{current.employee.name}</p>
+                  </div>
+                )}
+                {current.due_date && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-zinc-500">{t("dueDate")}</p>
+                    <p className="text-sm text-zinc-800">
+                      {format(new Date(current.due_date), "dd MMM yyyy HH:mm")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Progress */}
+            {current.items_count > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-zinc-500">
+                  <span>{t("progress")}</span>
+                  <span className="font-medium text-zinc-600">
+                    {current.items_done}/{current.items_count} · {current.progress}%
+                  </span>
+                </div>
+                <ProgressBar value={current.progress} />
+              </div>
+            )}
+
+            {/* Description */}
+            {current.description && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-zinc-500">{t("description")}</p>
+                <p className="text-sm leading-relaxed text-zinc-700">{current.description}</p>
+              </div>
+            )}
+
+            {/* Notes */}
+            {current.notes && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-zinc-500">{t("notes")}</p>
+                <p className="text-sm leading-relaxed bg-zinc-50 rounded-xl p-3 text-zinc-700 border border-zinc-100">
+                  {current.notes}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* ── Right: tasks ── */}
+          <div className="overflow-y-auto px-6 py-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                {t("items")}
+                <span className="text-zinc-300 font-normal ml-1.5 normal-case tracking-normal">
+                  ({current.items?.length ?? initialOrder.items_count})
+                </span>
+              </p>
+              {canEdit && !isAdding && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setEditingId(null); setIsAdding(true); setNewDraft(emptyDraft()); }}
+                  className="h-7 text-xs gap-1.5"
+                >
+                  <Plus size={12} />
+                  {t("addItem")}
+                </Button>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Skeleton */}
+              {isLoading && !current.items &&
+                Array.from({ length: initialOrder.items_count || 2 }).map((_, i) => (
+                  <div key={i} className="h-16 rounded-xl bg-zinc-100 animate-pulse" />
+                ))
+              }
+
+              {/* Item cards */}
+              {current.items?.map((item, idx) => {
+                const subtotal =
+                  item.subtotal != null
+                    ? Number(item.subtotal)
+                    : item.unit_price != null
+                      ? Number(item.unit_price) * item.quantity
+                      : null;
+                const hasPricing = item.unit_price != null && Number(item.unit_price) > 0;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="group rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 space-y-3"
+                  >
+                    {editingId === item.id ? (
+                      <ItemForm
+                        draft={editDraft}
+                        onChange={setEditDraft}
+                        onSave={handleSaveEdit}
+                        onCancel={cancelEdit}
+                        isSaving={updateItem.isPending}
+                        unitGroups={unitGroups}
+                        productsByCategory={productsByCategory}
+                      />
+                    ) : (
+                      <>
+                        {/* Row: number + description + actions */}
+                        <div className="flex items-center gap-3">
+                          {/* Toggle */}
+                          <button
+                            onClick={() => handleToggle(item.id)}
+                            disabled={current.status === "completed" || toggleItem.isPending}
+                            className="shrink-0 disabled:opacity-50"
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                item.status === "completed"
+                                  ? "bg-teal-500 border-teal-500"
+                                  : "border-zinc-300 hover:border-zinc-400"
+                              }`}
+                            >
+                              {item.status === "completed" && (
+                                <Check size={11} className="text-white" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Task label */}
+                          <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide shrink-0">
+                            Tarea {idx + 1}
+                          </span>
+
+                          <span className="flex-1" />
+
+                          {/* Edit / Delete */}
+                          {canEdit && (
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => startEdit(item)}
+                                className="p-1 rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                disabled={deleteItem.isPending}
+                                className="p-1 rounded text-zinc-300 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        <p
+                          className={`text-sm ${
+                            item.status === "completed"
+                              ? "line-through text-zinc-400"
+                              : "text-zinc-800"
+                          }`}
+                        >
+                          {item.description}
+                        </p>
+
+                        {/* Qty / unit / price row */}
+                        {(item.quantity > 1 || item.unit || hasPricing) && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-zinc-400">
+                              {item.quantity}
+                              {item.unit ? ` ${item.unit}` : ""}
+                              {hasPricing
+                                ? ` · $${Number(item.unit_price).toFixed(2)} c/u`
+                                : ""}
+                            </span>
+                            {subtotal != null && subtotal > 0 && (
+                              <span className="text-xs text-zinc-400">
+                                Subtotal:{" "}
+                                <span className="font-semibold text-zinc-700">
+                                  ${subtotal.toFixed(2)}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* New item card */}
+              {isAdding && (
+                <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">
+                      Nueva tarea
+                    </span>
+                  </div>
+                  <ItemForm
+                    draft={newDraft}
+                    onChange={setNewDraft}
+                    onSave={handleAddItem}
+                    onCancel={() => { setIsAdding(false); setNewDraft(emptyDraft()); }}
+                    isSaving={addItem.isPending}
+                    unitGroups={unitGroups}
+                    productsByCategory={productsByCategory}
+                    saveLabel="Agregar"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Order total */}
+            {orderTotal > 0 && (
+              <div className="flex justify-between items-center rounded-xl border border-zinc-200 bg-white px-4 py-3 mt-1">
+                <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                  Total
+                </span>
+                <span className="text-base font-bold text-zinc-800 tabular-nums">
+                  ${orderTotal.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Horizontal status stepper */}
+        <div className="shrink-0 border-t border-zinc-100 px-6 pt-4 pb-5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+            {t("status")}
+          </p>
+          <div className="relative flex items-start">
+            {/* Connector line between first and last circle centers */}
+            <div className="absolute top-[15px] left-[12.5%] right-[12.5%] h-px bg-zinc-100" />
+
+            {STATUSES.map((s, idx) => {
+              const isActive = current.status === s;
+              const isBlocked = isStatusBlocked(s);
+              const style = STATUS_STYLE[s];
+
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => handleStatusChange(s)}
+                  disabled={isActive || updateStatus.isPending || isBlocked}
+                  title={statusBlockedReason(s)}
+                  className={`group flex-1 flex flex-col items-center gap-1.5 relative z-10 ${
+                    isBlocked ? "cursor-not-allowed" : isActive ? "cursor-default" : ""
+                  }`}
+                >
+                  {/* Circle */}
+                  <div
+                    className={`w-[30px] h-[30px] rounded-full flex items-center justify-center ring-[3px] ring-white transition-all ${
+                      isActive
+                        ? style.circle
+                        : isBlocked
+                          ? "bg-zinc-100 border border-zinc-200"
+                          : "bg-white border border-zinc-300 group-hover:border-zinc-400 group-hover:bg-zinc-50"
+                    }`}
+                  >
+                    {isActive ? (
+                      updateStatus.isPending ? (
+                        <Loader2 size={13} className="text-white animate-spin" />
+                      ) : (
+                        <Check size={13} className="text-white" strokeWidth={2.5} />
+                      )
+                    ) : isBlocked ? (
+                      <Lock size={11} className="text-zinc-300" />
+                    ) : (
+                      <span className="text-[11px] font-bold text-zinc-400 group-hover:text-zinc-600">
+                        {idx + 1}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <span
+                    className={`text-[11px] font-medium text-center leading-tight px-1 ${
+                      isActive
+                        ? style.label
+                        : isBlocked
+                          ? "text-zinc-300"
+                          : "text-zinc-400 group-hover:text-zinc-600"
+                    }`}
+                  >
+                    {STATUS_LABEL[s]}
+                  </span>
+
+                  {/* Sublabel: task count for blocked completed */}
+                  {s === "completed" && isBlocked && hasItems && (
+                    <span className="text-[10px] text-zinc-300 leading-none">
+                      {current.items_done}/{current.items_count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
