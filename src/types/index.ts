@@ -121,7 +121,7 @@ export interface WorkOrder {
   title: string;
   description?: string;
   priority: "low" | "medium" | "high" | "urgent";
-  status: "pending" | "in_progress" | "in_review" | "completed";
+  status: "pending" | "in_progress" | "in_review" | "completed" | "cancelled";
   due_date?: string;
   completed_at?: string;
   notes?: string;
@@ -132,4 +132,31 @@ export interface WorkOrder {
   items_count: number;
   items_done: number;
   created_at: string;
+}
+
+export interface TicketItem {
+  id: number;
+  description: string;
+  quantity: number;
+  unit?: string;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface Ticket {
+  id: number;
+  folio: string;
+  work_order_id: number;
+  work_order?: {
+    id: number;
+    title: string;
+    description?: string;
+    employee?: { id: number; name: string };
+  };
+  status: "pending" | "paid";
+  total: number;
+  items?: TicketItem[];
+  notes?: string;
+  created_at: string;
+  paid_at?: string;
 }

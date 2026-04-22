@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Building2,
   ClipboardList,
+  Receipt,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useSidebar } from "./sidebar-context";
@@ -33,6 +34,11 @@ export function Sidebar() {
       href: `/${locale}/ordenes`,
       label: t("orders"),
       icon: ClipboardList,
+    },
+    {
+      href: `/${locale}/tickets`,
+      label: t("tickets"),
+      icon: Receipt,
     },
   ];
 

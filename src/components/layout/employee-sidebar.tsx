@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { ClipboardList, User, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ClipboardList, User, Receipt, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function EmployeeSidebar({ collapsed, onToggle }: Props) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tw = useTranslations("workOrders");
+  const tt = useTranslations("tickets");
   const locale = useLocale();
   const { user } = useAuthStore();
 
@@ -24,6 +25,11 @@ export function EmployeeSidebar({ collapsed, onToggle }: Props) {
       href: `/${locale}/mis-ordenes`,
       label: tw("myOrders"),
       icon: ClipboardList,
+    },
+    {
+      href: `/${locale}/mis-tickets`,
+      label: tt("myTickets"),
+      icon: Receipt,
     },
     {
       href: `/${locale}/mi-perfil`,

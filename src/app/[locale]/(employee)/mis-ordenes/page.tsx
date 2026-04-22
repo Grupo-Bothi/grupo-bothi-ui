@@ -21,8 +21,9 @@ export default function MisOrdenesPage() {
   // El backend ya filtra por el empleado autenticado
   const { data: orders = [], isLoading } = useWorkOrders();
 
-  const pending = orders.filter((o) => o.status !== "completed");
+  const active = orders.filter((o) => o.status !== "completed" && o.status !== "cancelled");
   const completed = orders.filter((o) => o.status === "completed");
+  const cancelled = orders.filter((o) => o.status === "cancelled");
 
   return (
     <div className="max-w-xl mx-auto">
@@ -30,7 +31,8 @@ export default function MisOrdenesPage() {
         <div>
           <h1 className="text-xl font-medium text-zinc-900">{t("myOrders")}</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
-            {pending.length} pendientes · {completed.length} completadas
+            {active.length} activas · {completed.length} completadas
+            {cancelled.length > 0 && ` · ${cancelled.length} canceladas`}
           </p>
         </div>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -50,33 +52,40 @@ export default function MisOrdenesPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Pendientes primero */}
-          {pending.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onClick={() => setSelected(order)}
-            />
+          {/* Activas */}
+          {active.map((order) => (
+            <OrderCard key={order.id} order={order} onClick={() => setSelected(order)} />
           ))}
-
-          {/* Separador */}
-          {completed.length > 0 && pending.length > 0 && (
-            <div className="flex items-center gap-3 py-2">
-              <div className="flex-1 h-px bg-zinc-100" />
-              <span className="text-xs text-zinc-400">Completadas</span>
-              <div className="flex-1 h-px bg-zinc-100" />
-            </div>
-          )}
 
           {/* Completadas */}
-          {completed.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onClick={() => setSelected(order)}
-              dimmed
-            />
-          ))}
+          {completed.length > 0 && (
+            <>
+              {active.length > 0 && (
+                <div className="flex items-center gap-3 py-2">
+                  <div className="flex-1 h-px bg-zinc-100" />
+                  <span className="text-xs text-zinc-400">Completadas</span>
+                  <div className="flex-1 h-px bg-zinc-100" />
+                </div>
+              )}
+              {completed.map((order) => (
+                <OrderCard key={order.id} order={order} onClick={() => setSelected(order)} dimmed />
+              ))}
+            </>
+          )}
+
+          {/* Canceladas */}
+          {cancelled.length > 0 && (
+            <>
+              <div className="flex items-center gap-3 py-2">
+                <div className="flex-1 h-px bg-zinc-100" />
+                <span className="text-xs text-red-300">Canceladas</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              {cancelled.map((order) => (
+                <OrderCard key={order.id} order={order} onClick={() => setSelected(order)} dimmed />
+              ))}
+            </>
+          )}
         </div>
       )}
 

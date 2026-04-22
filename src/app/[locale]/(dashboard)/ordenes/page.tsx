@@ -22,6 +22,7 @@ const STATUS_FILTERS = [
   "in_progress",
   "in_review",
   "completed",
+  "cancelled",
 ];
 
 export default function OrdenesPage() {

@@ -6,8 +6,8 @@ import { routing } from "@/i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 const PUBLIC_ROUTES = ["/login"];
-const EMPLOYEE_ROUTES = ["/mis-ordenes", "/mi-perfil"];
-const ADMIN_ROUTES = ["/dashboard", "/empleados", "/inventario", "/ordenes"];
+const EMPLOYEE_ROUTES = ["/mis-ordenes", "/mi-perfil", "/mis-tickets"];
+const ADMIN_ROUTES = ["/dashboard", "/empleados", "/inventario", "/ordenes", "/tickets"];
 
 export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
