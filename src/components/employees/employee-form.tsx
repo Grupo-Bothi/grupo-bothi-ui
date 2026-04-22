@@ -1,7 +1,7 @@
 // src/components/employees/employee-form.tsx
 "use client";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
@@ -40,16 +40,24 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
     name: z.string().min(1, t("nameRequired")),
     position: z.string().optional(),
     department: z.string().optional(),
-    salary: z.coerce.number().positive().optional().or(z.literal("")),
+    salary: z.union([z.coerce.number().positive(), z.literal("")]).optional(),
     email: z.string().email().optional().or(z.literal("")),
     phone: z.string().optional(),
     status: z.enum(["active", "inactive"]),
   });
 
-  type FormValues = z.infer<typeof schema>;
+  type FormValues = {
+    name: string;
+    position?: string;
+    department?: string;
+    salary?: number | "";
+    email?: string;
+    phone?: string;
+    status: "active" | "inactive";
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: { status: "active" },
   });
 

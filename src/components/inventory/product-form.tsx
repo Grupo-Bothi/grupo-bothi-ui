@@ -1,7 +1,7 @@
 // src/components/inventory/product-form.tsx
 "use client";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
@@ -43,10 +43,20 @@ export function ProductForm({ open, onOpenChange, product }: ProductFormProps) {
     available: z.boolean().optional(),
   });
 
-  type FormValues = z.infer<typeof schema>;
+  type FormValues = {
+    sku: string;
+    name: string;
+    min_stock: number;
+    unit_cost: number;
+    stock?: number;
+    price?: number;
+    category?: string;
+    description?: string;
+    available?: boolean;
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: { sku: "", name: "", stock: 0, min_stock: 0, unit_cost: 0, price: 0, category: "", description: "", available: true },
   });
 

@@ -1,7 +1,7 @@
 // src/components/work-orders/work-order-dialog.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
@@ -30,7 +30,14 @@ const schema = z.object({
   notes: z.string().optional(),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = {
+  title: string;
+  description?: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  employee_id?: number;
+  due_date?: string;
+  notes?: string;
+};
 
 interface ItemInput {
   description: string;
@@ -107,7 +114,7 @@ export function WorkOrderDialog({
     reset,
     watch,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({ resolver: zodResolver(schema) as Resolver<FormData> });
 
   const selectedPriority = watch("priority", "medium");
 

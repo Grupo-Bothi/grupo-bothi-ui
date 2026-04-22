@@ -2,60 +2,105 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-@AGENTS.md
+## Important: Next.js Version
+
+This project uses **Next.js 16**, which has breaking changes from older versions. Before writing any Next.js-specific code, read the relevant guide in `node_modules/next/dist/docs/` (e.g. `01-app/` for App Router). Heed deprecation notices.
 
 ## Commands
 
 ```bash
-npm run dev      # Start dev server on port 4200
+npm run dev      # Dev server on port 4200 (not the default 3000)
 npm run build    # Production build
-npm run lint     # Run ESLint
+npm run start    # Production server
+npm run lint     # ESLint (next/core-web-vitals + typescript)
 ```
 
-There are no test commands — this project has no test suite.
+No test runner is configured.
+
+## Environment Variables
+
+- `NEXT_PUBLIC_API_URL` — backend base URL (`.env.local`: `http://localhost:3000`, `.env.production`: hosted on Render)
 
 ## Architecture
 
-This is a **Next.js 16 App Router** ERP frontend with multi-tenancy and role-based routing.
+**App Router** with locale-based routing via `next-intl`. Every page lives under `src/app/[locale]/`. Route groups divide the app by role:
 
-### Route structure
+| Route group | Roles | Layout |
+|---|---|---|
+| `(auth)` | unauthenticated | none |
+| `(dashboard)` | owner, admin, manager | Sidebar + Header |
+| `(super-admin)` | super_admin | SuperAdminSidebar + Header |
+| `(employee)` | staff | EmployeeShell |
 
-All routes are under `src/app/[locale]/` (i18n via `next-intl`, locales: `es` / `en`, default `es`).
+**Middleware** is at `src/proxy.ts` (comment header says `src/middleware.ts` — this is intentional naming for the project). It handles locale routing via `next-intl`, auth redirects based on presence of the `auth_token` cookie, and role-based route blocking.
 
-Three route groups with distinct layouts:
-- `(dashboard)` — admin/manager views: dashboard, empleados, inventario, ordenes
-- `(super-admin)` — super-admin-only views: empresas, usuarios
-- `(employee)` — staff-only view: mis-ordenes
-- `(auth)` — public login page
+### Key Directories
 
-### Auth & middleware
+```
+src/
+  app/[locale]/          # All routes under locale prefix
+  components/
+    ui/                  # shadcn/ui primitives
+    layout/              # Shell components (sidebar, header, providers)
+    {feature}/           # Feature components (columns.tsx, form, dialogs)
+  hooks/                 # use-pagination, use-router (locale-aware), domain hooks
+  lib/
+    api.ts               # Axios instance + auth/locale/company interceptors
+    api-i18n.ts          # Locale resolver for use inside Axios interceptor
+    query.ts             # Singleton QueryClient (staleTime 5m, retry 1)
+    utils.ts             # cn() = clsx + tailwind-merge
+  services/              # One file per domain — thin functions over apiClient
+  store/auth.ts          # Zustand store with localStorage persist
+  types/index.ts         # All shared TypeScript interfaces
+  i18n/routing.ts        # Locales: ["es","en"], default: "es"
+messages/
+  es.json / en.json      # Namespaced translation strings
+```
 
-`src/proxy.ts` (actually the middleware) enforces role-based access using two cookies: `auth_token` and `user_role`. Roles: `super_admin`, `staff`, `manager`, `admin`, `owner`. On login, `useAuthStore` (`src/store/auth.ts`, Zustand + persist) stores the token in both `localStorage` and the `auth_token` cookie.
+## Tech Stack
 
-### API layer
+| Category | Library |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5, strict |
+| Styling | Tailwind CSS v4 (CSS-first config in `globals.css`, no `tailwind.config.ts`) |
+| UI Components | shadcn/ui (style: radix-maia) + Radix UI primitives |
+| Icons | HugeIcons (`@hugeicons/react`) + lucide-react |
+| State | Zustand v5 with `persist` (auth only) |
+| Server state | TanStack React Query v5 |
+| HTTP | Axios v1 |
+| Forms | react-hook-form v7 + Zod v4 + @hookform/resolvers |
+| i18n | next-intl v4 |
+| Tables | @tanstack/react-table v8 (server-side pagination) |
+| Toasts | Sonner v2 |
 
-`src/lib/api.ts` — a single Axios instance (`apiClient`) with two interceptors:
-1. **Request**: injects `Authorization: Bearer <token>`, `locale` header, and `X-Company-Id` header from `localStorage`.
-2. **Response**: maps HTTP error codes to i18n toast messages; on 401 with an existing token it clears auth and redirects to `/login`.
+## Code Patterns
 
-All backend calls go through `NEXT_PUBLIC_API_URL` (required env var).
+### API Layer
+Two-tier pattern:
+1. `src/lib/api.ts` — Axios instance. Request interceptor injects `Authorization`, `locale`, and `X-Company-Id` headers. Response interceptor maps HTTP errors to localized Sonner toasts; 401 with token clears storage and redirects to login.
+2. `src/services/*.ts` — plain functions calling `apiClient`, returning `Promise<T>`. Pattern: `apiClient.get('/api/v1/...').then(r => r.data)`.
 
-### Data fetching pattern
+### Data Fetching
+TanStack Query hooks either inline in page components or in dedicated hook files (`use-tickets.ts`, `use-work-orders.ts`). Invalidate via `queryClient.invalidateQueries` in mutation `onSuccess`.
 
-- **Services** (`src/services/`) — thin wrappers around `apiClient` that return typed promises. Follow the object-of-functions pattern: `inventoryService.list(...)`, `companiesService.create(...)`.
-- **Hooks** (`src/hooks/`) — wrap service calls with `useQuery`/`useMutation` from TanStack Query. Work-order hooks (`src/hooks/use-work-orders.ts`) inline the API calls rather than delegating to a service.
-- `src/lib/query.ts` — shared `QueryClient` (5 min stale time, 1 retry).
+### Feature Components
+- Forms open in `<Sheet>` (slide-over). Delete confirmations open in `<Dialog>`.
+- Both are controlled by local boolean state in the parent page.
+- Table column definitions live in `columns.tsx` per feature; consumed by shared `<DataTable>`.
 
-### Component conventions
-
-- `src/components/ui/` — shadcn/ui primitives (Button, Dialog, Sheet, DataTable, etc.)
-- `src/components/<domain>/` — feature components: `columns.tsx` (TanStack Table column defs), `<entity>-form.tsx` (react-hook-form + zod), `<entity>-delete-dialog.tsx`
-- `src/components/layout/` — shell components (Sidebar, Header, SidebarProvider context)
+### Server-Side Pagination
+All list endpoints accept `page`, `page_size`, `search`. Backend returns `PaginatedResponse<T>` shape: `{ info: PaginationInfo, results: T[] }`. Use `use-pagination.ts` hook for pagination state.
 
 ### i18n
+- `useTranslations("namespace")` in every component with text.
+- Locale-aware navigation via `useAppRouter` hook (`src/hooks/use-router.ts`) — wraps `useRouter` to prepend `/{locale}` to all navigations.
 
-Message files: `messages/es.json` and `messages/en.json`. Use `useTranslations()` in client components. For server-side error messages in the API interceptor, `src/lib/api-i18n.ts` provides `getApiT()` and `getLocale()`.
+### Multi-Company
+Active company ID stored in `localStorage` and sent as `X-Company-Id` on every request. Changing the selected company triggers a full re-fetch.
 
-### State
+### Styling
+Use `cn()` from `src/lib/utils.ts` for all conditional classNames. Tailwind v4 — config is entirely in `src/app/globals.css` via `@theme inline` CSS variables. Do not create a `tailwind.config.ts`.
 
-Global state is only used for auth (`useAuthStore`). All server data lives in TanStack Query cache. No Redux or other global stores.
+### Authentication
+JWT stored in both `localStorage` (`auth_token`) and as a cookie (for middleware SSR access). User role also stored as a cookie (`user_role`). Zustand auth store persists `{ token, user, selectedCompanyId }`.

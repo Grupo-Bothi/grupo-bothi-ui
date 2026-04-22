@@ -1,7 +1,7 @@
 // src/components/inventory/stock-movement-dialog.tsx
 "use client";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
@@ -40,10 +40,13 @@ export function StockMovementDialog({
     note: z.string().optional(),
   });
 
-  type FormValues = z.infer<typeof schema>;
+  type FormValues = {
+    qty: number;
+    note?: string;
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: { qty: 1, note: "" },
   });
 
