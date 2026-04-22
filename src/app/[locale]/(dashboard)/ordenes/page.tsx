@@ -2,19 +2,28 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useWorkOrders } from "@/hooks/use-work-orders";
+import { useWorkOrders, useDeleteWorkOrder } from "@/hooks/use-work-orders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { PriorityBadge } from "@/components/work-orders/priority-badge";
 import { StatusBadge } from "@/components/work-orders/status-badge";
 import { ProgressBar } from "@/components/work-orders/progress-bar";
 import { WorkOrderDialog } from "@/components/work-orders/work-order-dialog";
 import { WorkOrderDetail } from "@/components/work-orders/work-order-detail";
-import { ClipboardList, Search, Plus, RefreshCw } from "lucide-react";
+import { ClipboardList, Search, Plus, RefreshCw, Trash2 } from "lucide-react";
 import type { WorkOrder } from "@/types";
 import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { useLocale } from "next-intl";
+import { useAuthStore } from "@/store/auth";
+import { toast } from "sonner";
 
 const STATUS_FILTERS = [
   "all",
@@ -25,16 +34,23 @@ const STATUS_FILTERS = [
   "cancelled",
 ];
 
+const ADMIN_ROLES = ["admin", "owner", "super_admin"] as const;
+
 export default function OrdenesPage() {
   const t = useTranslations("workOrders");
   const locale = useLocale();
   const dateLocale = locale === "es" ? es : enUS;
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = ADMIN_ROLES.includes(user?.role as typeof ADMIN_ROLES[number]);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatus] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<WorkOrder | null>(null);
+  const [toDelete, setToDelete] = useState<WorkOrder | null>(null);
+
+  const deleteOrder = useDeleteWorkOrder();
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), 400);
@@ -130,17 +146,30 @@ export default function OrdenesPage() {
                     </p>
                   )}
                 </div>
-                <div className="text-right flex-shrink-0">
-                  {order.due_date && (
-                    <p className="text-xs text-zinc-400">
-                      {format(new Date(order.due_date), "dd MMM", {
-                        locale: dateLocale,
-                      })}
+                <div className="flex items-start gap-2 flex-shrink-0">
+                  <div className="text-right">
+                    {order.due_date && (
+                      <p className="text-xs text-zinc-400">
+                        {format(new Date(order.due_date), "dd MMM", {
+                          locale: dateLocale,
+                        })}
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {order.employee?.name ?? t("unassigned")}
                     </p>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setToDelete(order);
+                      }}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   )}
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {order.employee?.name ?? t("unassigned")}
-                  </p>
                 </div>
               </div>
 
@@ -169,6 +198,37 @@ export default function OrdenesPage() {
           onClose={() => setSelected(null)}
         />
       )}
+
+      <Dialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("deleteTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-500">
+            {t("deleteConfirm", { title: toDelete?.title ?? "" })}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setToDelete(null)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteOrder.isPending}
+              onClick={() => {
+                if (!toDelete) return;
+                deleteOrder.mutate(toDelete.id, {
+                  onSuccess: () => {
+                    toast.success(t("deleteSuccess"));
+                    setToDelete(null);
+                  },
+                });
+              }}
+            >
+              {deleteOrder.isPending ? t("deleting") : t("delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -322,6 +322,12 @@
     "unassigned": "Unassigned",
     "assignTo": "Assign to",
     "checkinAuto": "Check-in recorded automatically",
-    "selectProduct": "Select product (optional)"
+    "selectProduct": "Select product (optional)",
+    "cancel": "Cancel",
+    "deleteTitle": "Delete work order",
+    "deleteConfirm": "Are you sure you want to delete \"{title}\"? This action cannot be undone.",
+    "deleteSuccess": "Order deleted",
+    "delete": "Delete",
+    "deleting": "Deleting..."
   }
 }

@@ -109,3 +109,12 @@ export function useDeleteItem(orderId: number) {
     },
   });
 }
+
+export function useDeleteWorkOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiClient.delete(`/api/v1/work_orders/${id}`).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["work-orders"] }),
+  });
+}

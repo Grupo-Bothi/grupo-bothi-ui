@@ -322,6 +322,12 @@
     "unassigned": "Sin asignar",
     "assignTo": "Asignar a",
     "checkinAuto": "Entrada registrada automáticamente",
-    "selectProduct": "Seleccionar producto (opcional)"
+    "selectProduct": "Seleccionar producto (opcional)",
+    "cancel": "Cancelar",
+    "deleteTitle": "Eliminar orden de trabajo",
+    "deleteConfirm": "¿Estás seguro que deseas eliminar \"{title}\"? Esta acción no se puede deshacer.",
+    "deleteSuccess": "Orden eliminada",
+    "delete": "Eliminar",
+    "deleting": "Eliminando..."
   }
 }
