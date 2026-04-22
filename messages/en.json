@@ -100,7 +100,10 @@
     "deleting": "Deleting...",
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "activateSuccess": "Employee activated",
+    "deactivateSuccess": "Employee deactivated",
+    "toggleError": "Error changing employee status"
   },
   "api": {
     "invalidRequest": "Invalid request",
@@ -160,7 +163,20 @@
     "categoryPlaceholder": "Beverages",
     "description": "Description",
     "descriptionPlaceholder": "Product description...",
-    "available": "Available"
+    "available": "Available",
+    "cancel": "Cancel",
+    "importBtn": "Load template",
+    "importTitle": "Import products from template",
+    "importTemplateLabel": "Download template",
+    "importTemplateHint": "Download the Excel file with the required format",
+    "importDownload": "Download",
+    "importDropHint": "Drag the file here or click to select",
+    "importConfirm": "Import",
+    "importing": "Importing...",
+    "importSuccess": "{count} products imported",
+    "importError": "Error importing file",
+    "importInvalidFile": "Only .xlsx, .xls or .csv files are accepted",
+    "templateError": "Error downloading template"
   },
   "companies": {
     "title": "Companies",
@@ -242,6 +258,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
+    "activateSuccess": "User activated",
+    "deactivateSuccess": "User deactivated",
+    "toggleError": "Error changing user status",
     "roles": {
       "staff": "Staff",
       "manager": "Manager",

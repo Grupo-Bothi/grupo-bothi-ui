@@ -2,7 +2,8 @@
 "use client";
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Plus, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,19 @@ export default function UsuariosPage() {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { page, goTo, reset } = usePagination();
 
+  const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState<AdminUser | null>(null);
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: (id: number) => adminUsersService.toggleActive(id),
+    onSuccess: (updated) => {
+      toast.success(updated.active ? t("activateSuccess") : t("deactivateSuccess"));
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: () => toast.error(t("toggleError")),
+  });
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["admin-users", page, PAGE_SIZE, debouncedSearch],
@@ -58,6 +69,7 @@ export default function UsuariosPage() {
           setFormOpen(true);
         },
         onDelete: (user) => setDeleting(user),
+        onToggleActive: (user) => toggleActiveMutation.mutate(user.id),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

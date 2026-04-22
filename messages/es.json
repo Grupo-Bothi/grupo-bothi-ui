@@ -100,7 +100,10 @@
     "deleting": "Eliminando...",
     "cancel": "Cancelar",
     "save": "Guardar",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "activateSuccess": "Empleado activado",
+    "deactivateSuccess": "Empleado desactivado",
+    "toggleError": "Error al cambiar el estado del empleado"
   },
   "api": {
     "invalidRequest": "Solicitud inválida",
@@ -160,7 +163,20 @@
     "categoryPlaceholder": "Bebidas",
     "description": "Descripción",
     "descriptionPlaceholder": "Descripción del producto...",
-    "available": "Disponible"
+    "available": "Disponible",
+    "cancel": "Cancelar",
+    "importBtn": "Cargar plantilla",
+    "importTitle": "Importar productos desde plantilla",
+    "importTemplateLabel": "Descargar plantilla",
+    "importTemplateHint": "Descarga el archivo Excel con el formato requerido",
+    "importDownload": "Descargar",
+    "importDropHint": "Arrastrá el archivo aquí o hacé clic para seleccionar",
+    "importConfirm": "Importar",
+    "importing": "Importando...",
+    "importSuccess": "{count} productos importados",
+    "importError": "Error al importar el archivo",
+    "importInvalidFile": "Solo se aceptan archivos .xlsx, .xls o .csv",
+    "templateError": "Error al descargar la plantilla"
   },
   "companies": {
     "title": "Empresas",
@@ -242,6 +258,9 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "saving": "Guardando...",
+    "activateSuccess": "Usuario activado",
+    "deactivateSuccess": "Usuario desactivado",
+    "toggleError": "Error al cambiar el estado del usuario",
     "roles": {
       "staff": "Operador",
       "manager": "Gerente",

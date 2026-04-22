@@ -34,6 +34,9 @@ export const adminUsersService = {
   remove: (id: number): Promise<void> =>
     apiClient.delete(`/api/v1/users/${id}`).then((r) => r.data),
 
+  toggleActive: (id: number): Promise<AdminUser> =>
+    apiClient.patch(`/api/v1/users/${id}/active`).then((r) => r.data),
+
   assignCompanies: (userId: number, companyIds: number[]): Promise<AdminUser> =>
     apiClient
       .patch(`/api/v1/users/${userId}`, { user: { company_ids: companyIds } })

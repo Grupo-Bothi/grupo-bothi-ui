@@ -42,6 +42,13 @@ export const employeesService = {
   remove: (id: number): Promise<void> =>
     apiClient.delete(`/api/v1/employees/${id}`).then((r) => r.data),
 
+  toggleStatus: (id: number, currentStatus: "active" | "inactive"): Promise<Employee> =>
+    apiClient
+      .patch(`/api/v1/employees/${id}`, {
+        employee: { status: currentStatus === "active" ? "inactive" : "active" },
+      })
+      .then((r) => r.data),
+
   checkin: (id: number): Promise<void> =>
     apiClient.post(`/api/v1/employees/${id}/checkin`).then((r) => r.data),
 

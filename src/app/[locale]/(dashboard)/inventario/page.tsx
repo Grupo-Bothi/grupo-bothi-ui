@@ -3,7 +3,7 @@
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Plus, Search, RefreshCw, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
@@ -11,6 +11,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { ProductForm } from "@/components/inventory/product-form";
 import { ProductDeleteDialog } from "@/components/inventory/product-delete-dialog";
 import { StockMovementDialog } from "@/components/inventory/stock-movement-dialog";
+import { ProductImportDialog } from "@/components/inventory/product-import-dialog";
 import { getProductColumns } from "@/components/inventory/columns";
 import { inventoryService } from "@/services/inventory";
 import { usePagination } from "@/hooks/use-pagination";
@@ -32,6 +33,7 @@ export default function InventarioPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [movementProduct, setMovementProduct] = useState<Product | null>(null);
   const [movementType, setMovementType] = useState<"entry" | "exit" | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["products", page, PAGE_SIZE, debouncedSearch],
@@ -86,6 +88,10 @@ export default function InventarioPage() {
           <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
           </Button>
+          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+            <FileUp size={15} />
+            {t("importBtn")}
+          </Button>
           <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="gap-2">
             <Plus size={15} />
             {t("new")}
@@ -138,6 +144,9 @@ export default function InventarioPage() {
         movementType={movementType}
         onOpenChange={(open) => !open && closeMovement()}
       />
+
+      {/* Import Dialog */}
+      <ProductImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

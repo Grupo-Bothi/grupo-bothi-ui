@@ -2,8 +2,8 @@
 "use client";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +15,7 @@ import type { Employee } from "@/types";
 interface EmployeeActions {
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
+  onToggleStatus: (employee: Employee) => void;
 }
 
 export function getEmployeeColumns(
@@ -48,9 +49,15 @@ export function getEmployeeColumns(
       accessorKey: "status",
       header: t("status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "active" ? "default" : "secondary"}>
-          {row.original.status === "active" ? t("active") : t("inactive")}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={row.original.status === "active"}
+            onCheckedChange={() => actions.onToggleStatus(row.original)}
+          />
+          <span className={`text-xs ${row.original.status === "active" ? "text-zinc-700" : "text-zinc-400"}`}>
+            {row.original.status === "active" ? t("active") : t("inactive")}
+          </span>
+        </div>
       ),
     },
     {

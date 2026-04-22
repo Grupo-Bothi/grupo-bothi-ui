@@ -2,7 +2,8 @@
 "use client";
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Plus, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,19 @@ export default function EmpleadosPage() {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { page, goTo, reset } = usePagination();
 
+  const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState<Employee | null>(null);
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (emp: Employee) => employeesService.toggleStatus(emp.id, emp.status),
+    onSuccess: (updated) => {
+      toast.success(updated.status === "active" ? t("activateSuccess") : t("deactivateSuccess"));
+      qc.invalidateQueries({ queryKey: ["employees"] });
+    },
+    onError: () => toast.error(t("toggleError")),
+  });
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["employees", page, PAGE_SIZE, debouncedSearch],
@@ -55,6 +66,7 @@ export default function EmpleadosPage() {
       getEmployeeColumns(t, tc, {
         onEdit: (emp) => { setEditing(emp); setFormOpen(true); },
         onDelete: (emp) => setDeleting(emp),
+        onToggleStatus: (emp) => toggleStatusMutation.mutate(emp),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

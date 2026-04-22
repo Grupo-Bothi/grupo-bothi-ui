@@ -4,6 +4,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +16,7 @@ import type { AdminUser } from "@/types";
 interface UserActions {
   onEdit: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
+  onToggleActive: (user: AdminUser) => void;
 }
 
 export function getAdminUserColumns(
@@ -68,9 +70,15 @@ export function getAdminUserColumns(
       accessorKey: "active",
       header: t("status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.active ? "default" : "secondary"}>
-          {row.original.active ? t("active") : t("inactive")}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={row.original.active}
+            onCheckedChange={() => actions.onToggleActive(row.original)}
+          />
+          <span className={`text-xs ${row.original.active ? "text-zinc-700" : "text-zinc-400"}`}>
+            {row.original.active ? t("active") : t("inactive")}
+          </span>
+        </div>
       ),
     },
     {

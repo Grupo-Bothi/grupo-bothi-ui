@@ -63,4 +63,19 @@ export const inventoryService = {
         stock_movement: data,
       })
       .then((r) => r.data),
+
+  downloadTemplate: (): Promise<Blob> =>
+    apiClient
+      .get("/api/v1/products/template", { responseType: "blob" })
+      .then((r) => r.data),
+
+  importFromFile: (file: File): Promise<{ imported: number; errors: string[] }> => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiClient
+      .post("/api/v1/products/import", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
 };
