@@ -5,9 +5,9 @@ import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-const PUBLIC_ROUTES = ["/login"];
+const PUBLIC_ROUTES = ["/login", "/set-password", "/recuperar-contrasena"];
 const EMPLOYEE_ROUTES = ["/mis-ordenes", "/mi-perfil", "/mis-tickets"];
-const ADMIN_ROUTES = ["/dashboard", "/empleados", "/inventario", "/ordenes", "/tickets"];
+const ADMIN_ROUTES = ["/dashboard", "/inicio", "/empleados", "/inventario", "/ordenes", "/tickets"];
 
 export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -23,13 +23,14 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
-  if (token && isPublic) {
+  // set-password always accessible, even with an active session
+  if (token && isPublic && bare !== "/set-password") {
     const dest =
       role === "super_admin"
         ? `/${locale}/empresas`
         : role === "staff"
           ? `/${locale}/mis-ordenes`
-          : `/${locale}/dashboard`;
+          : `/${locale}/inicio`;
     return NextResponse.redirect(new URL(dest, request.url));
   }
 

@@ -1,5 +1,7 @@
 {
   "common": {
+    "brandName": "Bothi Soluciones",
+    "brandTagline": "",
     "save": "Save changes",
     "cancel": "Cancel",
     "edit": "Edit",
@@ -14,7 +16,7 @@
     "actions": "Actions"
   },
   "auth": {
-    "title": "Grupo Bothi",
+    "title": "Bothi Soluciones",
     "subtitle": "Sign in to your account",
     "email": "Email",
     "password": "Password",
@@ -29,15 +31,17 @@
     "heroTitle": "Your business,",
     "heroTitleHighlight": "under control.",
     "heroSubtitle": "All-in-one management for restaurants and SMBs. Inventory, staff, orders and reports in one place.",
-    "copyright": "© {year} Grupo Bothi · ERP System",
+    "copyright": "© {year} Bothi Soluciones · ERP System",
     "feature1Label": "Inventory control",
     "feature1Desc": "Real-time stock for kitchen and warehouse",
     "feature2Label": "Work orders",
     "feature2Desc": "Digitised order and production flow",
     "feature3Label": "Reports & analytics",
-    "feature3Desc": "Metrics to make fast decisions"
+    "feature3Desc": "Metrics to make fast decisions",
+    "forgotPassword": "Forgot your password?"
   },
   "nav": {
+    "home": "Home",
     "dashboard": "Dashboard",
     "employees": "Staff",
     "inventory": "Inventory",
@@ -49,13 +53,67 @@
     "users": "Users",
     "subscriptions": "Subscriptions"
   },
-  "dashboard": {
+  "home": {
     "welcome": "Welcome, {name}",
     "subtitle": "System overview",
     "activeEmployees": "Active employees",
     "totalProducts": "Products in inventory",
     "lowStock": "Low stock products",
     "activePlan": "Active plan"
+  },
+  "analyticsBoard": {
+    "title": "Dashboard",
+    "subtitle": "Hi, {name}. Here's your company summary.",
+    "subtitleAdmin": "Select a company to view its statistics.",
+    "selectCompany": "Select company",
+    "selectCompanyHint": "Select a company from the dropdown to view its dashboard.",
+    "totalEmployees": "Total employees",
+    "employeesSub": "{active} active · {inactive} inactive",
+    "totalWorkOrders": "Work orders",
+    "workOrdersSub": "{completed} completed",
+    "totalTickets": "Tickets",
+    "ticketsPending": "{count} pending",
+    "totalRevenue": "Total revenue",
+    "pendingRevenue": "{amount} pending",
+    "totalInventory": "Products in inventory",
+    "inventorySub": "{available} available",
+    "lowStock": "Low stock",
+    "outOfStock": "{count} out of stock",
+    "attendanceToday": "Attendance today",
+    "attendanceMonth": "{count} records this month",
+    "totalUsers": "Registered users",
+    "sectionOrders": "Work orders",
+    "sectionFinance": "Finance",
+    "sectionAttendance": "Attendance & inventory",
+    "chartOrdersByStatus": "Orders by status",
+    "chartOrdersByPriority": "Orders by priority",
+    "chartTickets": "Paid vs pending tickets",
+    "chartAttendanceToday": "Today's attendance",
+    "revenueBreakdown": "Revenue breakdown",
+    "collectedRevenue": "Collected",
+    "inventoryBreakdown": "Inventory",
+    "inventoryAvailable": "Available",
+    "inventoryUnavailable": "Unavailable",
+    "inventoryLowStock": "Low stock",
+    "inventoryOutOfStock": "Out of stock",
+    "ticketPaid": "Paid",
+    "ticketPending": "Pending",
+    "attendanceNormal": "On time",
+    "attendanceLate": "Late",
+    "attendanceAbsent": "Absent",
+    "workOrderStatuses": {
+      "pending": "Pending",
+      "in_progress": "In progress",
+      "in_review": "In review",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
   },
   "employees": {
     "title": "Staff",
@@ -224,6 +282,35 @@
     "subLoading": "Loading...",
     "viewSubscription": "View subscriptions"
   },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "subtitle": "Enter your email and we'll send you a link to reset it.",
+    "email": "Email address",
+    "emailPlaceholder": "you@email.com",
+    "emailInvalid": "Enter a valid email",
+    "submit": "Send link",
+    "submitting": "Sending...",
+    "successTitle": "Check your inbox",
+    "successDesc": "If an account exists for that email, you'll receive a password reset link within the next few minutes.",
+    "backToLogin": "Back to sign in"
+  },
+  "setPassword": {
+    "title": "Create your password",
+    "subtitle": "Choose a secure password to access your account.",
+    "password": "New password",
+    "confirm": "Confirm password",
+    "passwordMin": "Minimum 8 characters",
+    "confirmRequired": "Please confirm your password",
+    "passwordMismatch": "Passwords do not match",
+    "submit": "Set password",
+    "submitting": "Saving...",
+    "successToast": "Password set successfully",
+    "successTitle": "Password created!",
+    "successDesc": "You can now sign in with your new password.",
+    "invalidLinkTitle": "Invalid link",
+    "invalidLinkDesc": "This link is invalid or has expired. Contact your administrator to request a new one.",
+    "backToLogin": "Go to sign in"
+  },
   "adminUsers": {
     "title": "Users",
     "subtitle": "{count} users registered",
@@ -260,6 +347,8 @@
     "editTitle": "Edit user",
     "editSubtitle": "Update the user information",
     "createSuccess": "User created",
+    "createEmailSent": "An email with the password setup link has been sent.",
+    "createEmailNotice": "After saving, the user will receive an email with a link to set their password.",
     "updateSuccess": "User updated",
     "deleteTitle": "Delete user",
     "deleteConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",

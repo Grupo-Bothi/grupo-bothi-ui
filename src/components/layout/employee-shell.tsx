@@ -5,7 +5,7 @@ import { EmployeeSidebar } from "./employee-sidebar";
 import { EmployeeHeader } from "./employee-header";
 
 export function EmployeeShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-zinc-50">

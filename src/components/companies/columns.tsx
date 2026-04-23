@@ -39,11 +39,15 @@ function getSubStatus(sub: Subscription | null): DisplaySubStatus {
   const isTrial = sub.status === "trial" || sub.status === "trialing";
   const raw = sub.current_period_end ?? sub.trial_ends_at;
   const daysLeft = raw ? differenceInDays(new Date(raw), new Date()) : null;
-  if (sub.status === "expired" || (isTrial && daysLeft !== null && daysLeft <= 0))
+  if (
+    sub.status === "expired" ||
+    (isTrial && daysLeft !== null && daysLeft <= 0)
+  )
     return "expired";
   if (sub.status === "cancelled") return "cancelled";
   if (isTrial) return "trial";
-  if (sub.status === "active" && daysLeft !== null && daysLeft <= 7) return "expiring_soon";
+  if (sub.status === "active" && daysLeft !== null && daysLeft <= 7)
+    return "expiring_soon";
   if (sub.status === "active") return "active";
   return "none";
 }
@@ -58,14 +62,9 @@ export function getCompanyColumns(
       id: "name",
       header: t("name"),
       cell: ({ row }) => (
-        <span className="font-medium text-zinc-800">{row.original.company.name}</span>
-      ),
-    },
-    {
-      id: "slug",
-      header: t("slug"),
-      cell: ({ row }) => (
-        <span className="text-zinc-400 font-mono text-xs">{row.original.company.slug}</span>
+        <span className="font-medium text-zinc-800">
+          {row.original.company.name}
+        </span>
       ),
     },
     {
@@ -74,7 +73,11 @@ export function getCompanyColumns(
       cell: ({ row }) => {
         const plan = row.original.company.plan;
         const variant =
-          plan === "enterprise" ? "default" : plan === "business" ? "secondary" : "outline";
+          plan === "enterprise"
+            ? "default"
+            : plan === "business"
+              ? "secondary"
+              : "outline";
         return <Badge variant={variant}>{t(`plans.${plan}`)}</Badge>;
       },
     },
@@ -85,7 +88,9 @@ export function getCompanyColumns(
         const { subscription, isLoadingSub } = row.original;
         if (isLoadingSub)
           return (
-            <span className="text-xs text-zinc-400 animate-pulse">{t("subLoading")}</span>
+            <span className="text-xs text-zinc-400 animate-pulse">
+              {t("subLoading")}
+            </span>
           );
 
         const status = getSubStatus(subscription);
@@ -145,16 +150,9 @@ export function getCompanyColumns(
       id: "users_count",
       header: t("users"),
       cell: ({ row }) => (
-        <span className="text-zinc-500">{row.original.company.users_count ?? 0}</span>
-      ),
-    },
-    {
-      id: "active",
-      header: t("status"),
-      cell: ({ row }) => (
-        <Badge variant={row.original.company.active ? "default" : "secondary"}>
-          {row.original.company.active ? t("active") : t("inactive")}
-        </Badge>
+        <span className="text-zinc-500">
+          {row.original.company.users_count ?? 0}
+        </span>
       ),
     },
     {

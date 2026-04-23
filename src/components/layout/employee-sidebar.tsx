@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { ClipboardList, User, Receipt, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import {
+  ClipboardList,
+  User,
+  Receipt,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,8 +22,8 @@ export function EmployeeSidebar({ collapsed, onToggle }: Props) {
   const t = useTranslations("nav");
   const tw = useTranslations("workOrders");
   const tt = useTranslations("tickets");
+  const tc = useTranslations("common");
   const locale = useLocale();
-  const { user } = useAuthStore();
 
   const NAV = [
     {
@@ -53,11 +58,25 @@ export function EmployeeSidebar({ collapsed, onToggle }: Props) {
         )}
       >
         {collapsed ? (
-          <span className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">G</span>
+          <span className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+            </svg>
           </span>
         ) : (
-          <p className="font-semibold text-sm text-zinc-900 truncate">Grup Bothi</p>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-zinc-900 leading-tight truncate">{tc("brandName")}</p>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-widest leading-tight">{tc("brandTagline")}</p>
+            </div>
+          </div>
         )}
       </div>
 
@@ -95,7 +114,11 @@ export function EmployeeSidebar({ collapsed, onToggle }: Props) {
             collapsed && "justify-center",
           )}
         >
-          {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          {collapsed ? (
+            <PanelLeftOpen size={17} />
+          ) : (
+            <PanelLeftClose size={17} />
+          )}
           {!collapsed && <span className="text-xs">Colapsar</span>}
         </button>
       </div>

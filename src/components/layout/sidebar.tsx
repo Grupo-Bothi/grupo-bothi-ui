@@ -10,10 +10,14 @@ import {
   Building2,
   ClipboardList,
   Receipt,
+  Home,
+  BarChart2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
+
+const ANALYTICS_ROLES = new Set(["admin", "owner", "manager"]);
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -22,12 +26,23 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const { open } = useSidebar();
 
+  const showAnalytics = !!user && ANALYTICS_ROLES.has(user.role);
+
   const NAV = [
     {
-      href: `/${locale}/dashboard`,
-      label: t("dashboard"),
-      icon: LayoutDashboard,
+      href: `/${locale}/inicio`,
+      label: t("home"),
+      icon: Home,
     },
+    ...(showAnalytics
+      ? [
+          {
+            href: `/${locale}/dashboard`,
+            label: t("dashboard"),
+            icon: BarChart2,
+          },
+        ]
+      : []),
     { href: `/${locale}/empleados`, label: t("employees"), icon: Users },
     { href: `/${locale}/inventario`, label: t("inventory"), icon: Package },
     {
@@ -58,7 +73,7 @@ export function Sidebar() {
         <Building2 size={18} className="text-zinc-500 shrink-0" />
         {open && (
           <span className="ml-2 font-medium text-sm text-zinc-800 truncate">
-            {user?.companies?.[0]?.name || "Grupo Bothi"}
+            {user?.companies?.[0]?.name ?? ""}
           </span>
         )}
       </div>

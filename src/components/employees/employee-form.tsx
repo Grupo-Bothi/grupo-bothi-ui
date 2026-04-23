@@ -134,7 +134,7 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isEdit ? "grid-cols-2" : "grid-cols-1"}`}>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">{t("salary")}</Label>
                 <Input
@@ -145,16 +145,18 @@ export function EmployeeForm({ open, onOpenChange, employee }: EmployeeFormProps
                   {...register("salary")}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">{t("status")}</Label>
-                <select
-                  {...register("status")}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="active">{t("active")}</option>
-                  <option value="inactive">{t("inactive")}</option>
-                </select>
-              </div>
+              {isEdit && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-zinc-700">{t("status")}</Label>
+                  <select
+                    {...register("status")}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="active">{t("active")}</option>
+                    <option value="inactive">{t("inactive")}</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

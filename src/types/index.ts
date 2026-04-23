@@ -146,6 +146,41 @@ export interface WorkOrder {
   created_at: string;
 }
 
+export interface DashboardStats {
+  employees: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+  users: {
+    total: number;
+    by_role: Record<string, number>;
+  };
+  work_orders: {
+    total: number;
+    by_status: Record<string, number>;
+    by_priority: Record<string, number>;
+  };
+  tickets: {
+    total: number;
+    pending: number;
+    paid: number;
+    total_revenue: number;
+    pending_revenue: number;
+  };
+  inventory: {
+    total: number;
+    available: number;
+    unavailable: number;
+    low_stock: number;
+    out_of_stock: number;
+  };
+  attendance: {
+    today: { total: number; normal: number; late: number; absent: number };
+    this_month: number;
+  };
+}
+
 export interface TicketItem {
   id: number;
   description: string;

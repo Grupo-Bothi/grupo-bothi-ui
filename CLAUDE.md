@@ -25,14 +25,16 @@ No test runner is configured.
 
 **App Router** with locale-based routing via `next-intl`. Every page lives under `src/app/[locale]/`. Route groups divide the app by role:
 
-| Route group | Roles | Layout |
-|---|---|---|
-| `(auth)` | unauthenticated | none |
-| `(dashboard)` | owner, admin, manager | Sidebar + Header |
-| `(super-admin)` | super_admin | SuperAdminSidebar + Header |
-| `(employee)` | staff | EmployeeShell |
+| Route group | Roles | Layout | Routes (Spanish) |
+|---|---|---|---|
+| `(auth)` | unauthenticated | none | `/login` |
+| `(dashboard)` | owner, admin, manager | Sidebar + Header | `/dashboard`, `/empleados`, `/inventario`, `/ordenes`, `/tickets`, `/suscripcion`, `/perfil` |
+| `(super-admin)` | super_admin | SuperAdminSidebar + Header | `/empresas`, `/usuarios`, `/suscripciones` |
+| `(employee)` | staff | EmployeeShell | `/mis-ordenes`, `/mis-tickets` |
 
-**Middleware** is at `src/proxy.ts` (comment header says `src/middleware.ts` — this is intentional naming for the project). It handles locale routing via `next-intl`, auth redirects based on presence of the `auth_token` cookie, and role-based route blocking.
+**Route paths are in Spanish** — match this convention when adding new routes.
+
+**Middleware** is at `src/proxy.ts` (named proxy, not middleware — intentional). It handles locale routing via `next-intl`, auth redirects based on the `auth_token` cookie, and role-based route blocking (`staff` is hard-redirected away from admin routes).
 
 ### Key Directories
 
@@ -49,6 +51,7 @@ src/
     api-i18n.ts          # Locale resolver for use inside Axios interceptor
     query.ts             # Singleton QueryClient (staleTime 5m, retry 1)
     utils.ts             # cn() = clsx + tailwind-merge
+    ticket-pdf.ts        # PDF generation for tickets
   services/              # One file per domain — thin functions over apiClient
   store/auth.ts          # Zustand store with localStorage persist
   types/index.ts         # All shared TypeScript interfaces
@@ -79,10 +82,19 @@ messages/
 ### API Layer
 Two-tier pattern:
 1. `src/lib/api.ts` — Axios instance. Request interceptor injects `Authorization`, `locale`, and `X-Company-Id` headers. Response interceptor maps HTTP errors to localized Sonner toasts; 401 with token clears storage and redirects to login.
-2. `src/services/*.ts` — plain functions calling `apiClient`, returning `Promise<T>`. Pattern: `apiClient.get('/api/v1/...').then(r => r.data)`.
+2. `src/services/*.ts` — two coexisting export styles:
+   - **Object style**: `export const ticketsService = { list, getById, ... }` — used by most features.
+   - **Function style**: `export const getSubscription = () => ...` — used for subscription and companies.
+   Match the style already in the file you're editing.
+
+### Bypassing the Error Interceptor
+When a non-2xx response is expected and you don't want the global toast (e.g., super-admin querying a company with an expired subscription), pass `validateStatus: (s) => s < 500` to the apiClient call and handle the status manually. See `getCompanySubscription` in `src/services/subscription.ts`.
+
+### Subscription Guard
+`<SubscriptionGuard>` is rendered inside the `(dashboard)` layout. It fetches `/api/v1/subscription` and blocks the entire UI with a non-dismissible dialog when `status === "expired"`. `<TrialBanner>` renders a countdown for `trial`/`trialing` statuses. Neither runs for `super_admin` role (`enabled: !!user && user.role !== 'super_admin'`).
 
 ### Data Fetching
-TanStack Query hooks either inline in page components or in dedicated hook files (`use-tickets.ts`, `use-work-orders.ts`). Invalidate via `queryClient.invalidateQueries` in mutation `onSuccess`.
+TanStack Query hooks either inline in page components or in dedicated hook files (`use-tickets.ts`, `use-work-orders.ts`). For features with many mutations (work orders), group all hooks in one file. Invalidate via `queryClient.invalidateQueries` in mutation `onSuccess`. Use `qc.setQueryData` for optimistic-style updates on detail queries.
 
 ### Feature Components
 - Forms open in `<Sheet>` (slide-over). Delete confirmations open in `<Dialog>`.
@@ -97,10 +109,10 @@ All list endpoints accept `page`, `page_size`, `search`. Backend returns `Pagina
 - Locale-aware navigation via `useAppRouter` hook (`src/hooks/use-router.ts`) — wraps `useRouter` to prepend `/{locale}` to all navigations.
 
 ### Multi-Company
-Active company ID stored in `localStorage` and sent as `X-Company-Id` on every request. Changing the selected company triggers a full re-fetch.
+Active company ID stored in `localStorage` (`selected_company_id`) and sent as `X-Company-Id` on every request. Changing the selected company triggers a full re-fetch.
 
 ### Styling
 Use `cn()` from `src/lib/utils.ts` for all conditional classNames. Tailwind v4 — config is entirely in `src/app/globals.css` via `@theme inline` CSS variables. Do not create a `tailwind.config.ts`.
 
 ### Authentication
-JWT stored in both `localStorage` (`auth_token`) and as a cookie (for middleware SSR access). User role also stored as a cookie (`user_role`). Zustand auth store persists `{ token, user, selectedCompanyId }`.
+JWT stored in both `localStorage` (`auth_token`) and as a cookie (for middleware SSR access, 24h max-age). User role also stored as a cookie (`user_role`). Zustand auth store persists `{ token, user, selectedCompanyId }`. Creating an employee also creates a `User` account; the response includes a one-time `temp_password` field.

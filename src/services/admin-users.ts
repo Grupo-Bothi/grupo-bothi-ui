@@ -9,7 +9,6 @@ export interface AdminUserPayload {
   second_last_name: string;
   phone: string;
   role: "staff" | "manager" | "admin" | "owner";
-  password?: string;
   active?: boolean;
   company_ids?: number[];
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Building2, Users, ShieldCheck, CreditCard } from "lucide-react";
+import { Building2, Users, ShieldCheck, CreditCard, BarChart2 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,11 @@ export function SuperAdminSidebar() {
   const { open } = useSidebar();
 
   const NAV = [
+    {
+      href: `/${locale}/estadisticas`,
+      label: t("dashboard"),
+      icon: BarChart2,
+    },
     {
       href: `/${locale}/empresas`,
       label: t("companies"),

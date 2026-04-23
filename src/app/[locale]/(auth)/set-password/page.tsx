@@ -1,0 +1,206 @@
+// src/app/[locale]/(auth)/set-password/page.tsx
+"use client";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Eye, EyeOff, KeyRound, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { setPassword } from "@/services/auth";
+
+function BrandMark() {
+  return (
+    <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth="2"
+        className="w-5 h-5"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"
+        />
+      </svg>
+    </div>
+  );
+}
+
+export default function SetPasswordPage() {
+  const t = useTranslations("setPassword");
+  const tc = useTranslations("common");
+  const router = useRouter();
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const schema = z
+    .object({
+      password: z.string().min(8, t("passwordMin")),
+      confirm: z.string().min(1, t("confirmRequired")),
+    })
+    .refine((d) => d.password === d.confirm, {
+      message: t("passwordMismatch"),
+      path: ["confirm"],
+    });
+
+  type FormValues = z.infer<typeof schema>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  async function onSubmit({ password, confirm }: FormValues) {
+    try {
+      await setPassword(token!, password, confirm);
+      setDone(true);
+      toast.success(t("successToast"));
+      setTimeout(() => router.push(`/${locale}/login`), 2500);
+    } catch {
+      // error handled by the global interceptor
+    }
+  }
+
+  /* ── No token in URL ── */
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+        <div className="text-center max-w-sm">
+          <ShieldAlert size={40} className="text-red-400 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-slate-800 mb-1">
+            {t("invalidLinkTitle")}
+          </h2>
+          <p className="text-sm text-slate-500 mb-6">{t("invalidLinkDesc")}</p>
+          <Button variant="outline" onClick={() => router.push(`/${locale}/login`)}>
+            {t("backToLogin")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Password set successfully ── */
+  if (done) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+            <KeyRound size={24} className="text-emerald-600" />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-800 mb-1">
+            {t("successTitle")}
+          </h2>
+          <p className="text-sm text-slate-500">{t("successDesc")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6 py-12">
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="flex items-center gap-3 mb-8 justify-center">
+          <BrandMark />
+          <div>
+            <p className="font-semibold text-slate-900 leading-tight">{tc("brandName")}</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-widest">{tc("brandTagline")}</p>
+          </div>
+        </div>
+
+        <div className="mb-7 text-center">
+          <h2 className="text-2xl font-semibold text-slate-900">{t("title")}</h2>
+          <p className="text-sm text-slate-500 mt-1">{t("subtitle")}</p>
+        </div>
+
+        <Card className="shadow-sm border-slate-200 bg-white">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* New password */}
+              <div className="space-y-1.5">
+                <Label className="text-sm">{t("password")}</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pr-10"
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Confirm password */}
+              <div className="space-y-1.5">
+                <Label className="text-sm">{t("confirm")}</Label>
+                <div className="relative">
+                  <Input
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pr-10"
+                    {...register("confirm")}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirm((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                {errors.confirm && (
+                  <p className="text-xs text-red-500">{errors.confirm.message}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? t("submitting") : t("submit")}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="text-center mt-5">
+          <button
+            type="button"
+            className="text-sm text-slate-500 hover:text-slate-700 underline-offset-2 hover:underline"
+            onClick={() => router.push(`/${locale}/login`)}
+          >
+            {t("backToLogin")}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check } from "lucide-react";
+import { Check, Mail } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -55,7 +55,6 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
     role: z.enum(["staff", "manager", "admin", "owner"]),
     active: z.boolean(),
     company_ids: z.array(z.number()),
-    password: z.string().min(6, t("passwordMin")).optional().or(z.literal("")),
   });
 
   type FormValues = z.infer<typeof schema>;
@@ -95,7 +94,6 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
       role: src?.role ?? "staff",
       active: src?.active ?? true,
       company_ids: src?.companies?.map((c) => c.id) ?? [],
-      password: "",
     });
   }, [open, userData, isEdit, reset]);
 
@@ -110,14 +108,17 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
         role: values.role,
         active: values.active,
         company_ids: values.company_ids,
-        ...(values.password ? { password: values.password } : {}),
       };
       return isEdit
         ? adminUsersService.update(user!.id, payload)
-        : adminUsersService.create({ ...payload, password: values.password || "" });
+        : adminUsersService.create(payload);
     },
     onSuccess: () => {
-      toast.success(isEdit ? t("updateSuccess") : t("createSuccess"));
+      if (isEdit) {
+        toast.success(t("updateSuccess"));
+      } else {
+        toast.success(t("createSuccess"), { description: t("createEmailSent") });
+      }
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       onOpenChange(false);
     },
@@ -198,24 +199,18 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
               )}
             </div>
 
-            {/* Contraseña */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-zinc-700">
-                {t("password")}
-                {isEdit && (
-                  <span className="ml-1 text-zinc-400 font-normal">
-                    ({t("passwordOptional")})
-                  </span>
-                )}
-              </Label>
-              <Input type="password" placeholder="••••••••" {...register("password")} />
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
+            {/* Email notice (only on create) */}
+            {!isEdit && (
+              <div className="flex items-start gap-2.5 rounded-lg bg-blue-50 border border-blue-100 px-3.5 py-3">
+                <Mail size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  {t("createEmailNotice")}
+                </p>
+              </div>
+            )}
 
             {/* Rol + Estado */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isEdit ? "grid-cols-2" : "grid-cols-1"}`}>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
                   {t("role")}
@@ -231,18 +226,20 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  {t("status")}
-                </Label>
-                <select
-                  {...register("active", { setValueAs: (v) => v === "true" })}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="true">{t("active")}</option>
-                  <option value="false">{t("inactive")}</option>
-                </select>
-              </div>
+              {isEdit && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-zinc-700">
+                    {t("status")}
+                  </Label>
+                  <select
+                    {...register("active", { setValueAs: (v) => v === "true" })}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="true">{t("active")}</option>
+                    <option value="false">{t("inactive")}</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Empresas */}

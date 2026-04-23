@@ -32,17 +32,24 @@ export function getEmployeeColumns(
       ),
     },
     {
+      accessorKey: "email",
+      header: t("email"),
+      cell: ({ row }) => (
+        <span className="text-zinc-500">{row.original.email ?? "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "phone",
+      header: t("phone"),
+      cell: ({ row }) => (
+        <span className="text-zinc-500">{row.original.phone ?? "—"}</span>
+      ),
+    },
+    {
       accessorKey: "position",
       header: t("position"),
       cell: ({ row }) => (
         <span className="text-zinc-500">{row.original.position ?? "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "department",
-      header: t("department"),
-      cell: ({ row }) => (
-        <span className="text-zinc-500">{row.original.department ?? "—"}</span>
       ),
     },
     {
@@ -54,7 +61,9 @@ export function getEmployeeColumns(
             checked={row.original.status === "active"}
             onCheckedChange={() => actions.onToggleStatus(row.original)}
           />
-          <span className={`text-xs ${row.original.status === "active" ? "text-zinc-700" : "text-zinc-400"}`}>
+          <span
+            className={`text-xs ${row.original.status === "active" ? "text-zinc-700" : "text-zinc-400"}`}
+          >
             {row.original.status === "active" ? t("active") : t("inactive")}
           </span>
         </div>
