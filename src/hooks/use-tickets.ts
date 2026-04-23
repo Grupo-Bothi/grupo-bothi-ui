@@ -34,3 +34,9 @@ export function useMarkTicketPaid(id: number) {
     },
   });
 }
+
+export function useSendTicketWhatsapp(id: number) {
+  return useMutation({
+    mutationFn: (phone: string) => ticketsService.sendWhatsapp(id, phone),
+  });
+}

@@ -5,6 +5,9 @@ export interface User {
   first_name: string;
   middle_name?: string;
   last_name: string;
+  phone?: string;
+  description?: string;
+  avatar_url?: string;
   role: "staff" | "manager" | "admin" | "owner" | "super_admin";
   active: boolean;
   companies: Company[];

@@ -2,18 +2,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { ResponsiveBar } from "@nivo/bar";
+import { ResponsivePie } from "@nivo/pie";
 import {
   DollarSign,
   TrendingDown,
@@ -40,6 +30,27 @@ type Tab = "summary" | "income" | "expenses" | "payroll";
 
 const PERIODS: ReportPeriod[] = ["weekly", "monthly", "annual"];
 const GROUP_BYS: GroupBy[] = ["week", "month", "year"];
+
+const NIVO_THEME = {
+  axis: {
+    ticks: {
+      text: { fontSize: 11, fill: "#71717a" },
+      line: { strokeWidth: 0 },
+    },
+    domain: { line: { strokeWidth: 0 } },
+  },
+  grid: { line: { stroke: "#f4f4f5" } },
+} as const;
+
+const tooltipStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  background: "white",
+  border: "1px solid #e4e4e7",
+  borderRadius: 8,
+  fontSize: 12,
+  color: "#3f3f46",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+};
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#f59e0b",
@@ -397,38 +408,39 @@ export function ReportContent({ companyId }: ReportContentProps) {
           <SectionTitle>{t("income.title")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("income.chartTitle")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={incomeChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {incomeChartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v) =>
-                      typeof v === "number" ? formatCurrency(v) : String(v)
-                    }
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 12, color: "#52525b" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsivePie<{ id: string; value: number; color: string }>
+                  data={incomeChartData.map((d) => ({
+                    id: d.name,
+                    value: d.value,
+                    color: d.fill,
+                  }))}
+                  innerRadius={0.65}
+                  padAngle={3}
+                  colors={(d) => d.data.color}
+                  enableArcLinkLabels={false}
+                  enableArcLabels={false}
+                  margin={{ top: 10, right: 10, bottom: 60, left: 10 }}
+                  theme={NIVO_THEME}
+                  legends={[
+                    {
+                      anchor: "bottom",
+                      direction: "row",
+                      itemWidth: 80,
+                      itemHeight: 16,
+                      itemsSpacing: 8,
+                      symbolSize: 8,
+                      symbolShape: "circle",
+                      itemTextColor: "#52525b",
+                    },
+                  ]}
+                  tooltip={({ datum }) => (
+                    <div style={tooltipStyle}>
+                      {datum.label}: <strong>{formatCurrency(datum.value)}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <div className="bg-white rounded-xl border border-zinc-200 p-5 flex flex-col gap-4 justify-center">
@@ -490,35 +502,30 @@ export function ReportContent({ companyId }: ReportContentProps) {
           <SectionTitle>{t("workOrders.title")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("workOrders.chartTitle")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={workOrderStatusData} barSize={32}>
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "#f4f4f5" }}
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {workOrderStatusData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsiveBar<{ name: string; value: number; fill: string }>
+                  data={workOrderStatusData}
+                  keys={["value"]}
+                  indexBy="name"
+                  margin={{ top: 10, right: 10, bottom: 36, left: 36 }}
+                  padding={0.4}
+                  borderRadius={4}
+                  colors={(bar) => bar.data.fill}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => (Number.isInteger(Number(v)) ? String(v) : ""),
+                  }}
+                  enableLabel={false}
+                  tooltip={({ indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {indexValue}: <strong>{value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <div className="bg-white rounded-xl border border-zinc-200 p-5 flex flex-col gap-3 justify-center">
@@ -553,70 +560,66 @@ export function ReportContent({ companyId }: ReportContentProps) {
           <SectionTitle>{t("expenses.title")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("expenses.title")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={expenseChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {expenseChartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v) =>
-                      typeof v === "number" ? formatCurrency(v) : String(v)
-                    }
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 12, color: "#52525b" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsivePie<{ id: string; value: number; color: string }>
+                  data={expenseChartData.map((d) => ({
+                    id: d.name,
+                    value: d.value,
+                    color: d.fill,
+                  }))}
+                  innerRadius={0.65}
+                  padAngle={3}
+                  colors={(d) => d.data.color}
+                  enableArcLinkLabels={false}
+                  enableArcLabels={false}
+                  margin={{ top: 10, right: 10, bottom: 60, left: 10 }}
+                  theme={NIVO_THEME}
+                  legends={[
+                    {
+                      anchor: "bottom",
+                      direction: "row",
+                      itemWidth: 80,
+                      itemHeight: 16,
+                      itemsSpacing: 8,
+                      symbolSize: 8,
+                      symbolShape: "circle",
+                      itemTextColor: "#52525b",
+                    },
+                  ]}
+                  tooltip={({ datum }) => (
+                    <div style={tooltipStyle}>
+                      {datum.label}: <strong>{formatCurrency(datum.value)}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <ChartCard title={t("attendance.title")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={attendanceData} barSize={40}>
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "#f4f4f5" }}
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {attendanceData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsiveBar<{ name: string; value: number; fill: string }>
+                  data={attendanceData}
+                  keys={["value"]}
+                  indexBy="name"
+                  margin={{ top: 10, right: 10, bottom: 36, left: 36 }}
+                  padding={0.35}
+                  borderRadius={4}
+                  colors={(bar) => bar.data.fill}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => (Number.isInteger(Number(v)) ? String(v) : ""),
+                  }}
+                  enableLabel={false}
+                  tooltip={({ indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {indexValue}: <strong>{value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
           </div>
         </div>
@@ -665,35 +668,30 @@ export function ReportContent({ companyId }: ReportContentProps) {
             </div>
           ) : (
             <ChartCard title={t("income.chartTitle")}>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={incomeGroups} barSize={32}>
-                  <XAxis
-                    dataKey="displayPeriod"
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={(v) => formatCurrency(v)}
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={80}
-                  />
-                  <Tooltip
-                    formatter={(v) =>
-                      typeof v === "number" ? formatCurrency(v) : String(v)
-                    }
-                    cursor={{ fill: "#f4f4f5" }}
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Bar dataKey="total" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 240 }}>
+                <ResponsiveBar
+                  data={incomeGroups}
+                  keys={["total"]}
+                  indexBy="displayPeriod"
+                  margin={{ top: 10, right: 10, bottom: 36, left: 80 }}
+                  padding={0.4}
+                  borderRadius={4}
+                  colors={() => "#10b981"}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => formatCurrency(Number(v)),
+                  }}
+                  enableLabel={false}
+                  tooltip={({ indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {indexValue}: <strong>{formatCurrency(value)}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
           )}
 
@@ -816,53 +814,47 @@ export function ReportContent({ companyId }: ReportContentProps) {
             </div>
           ) : (
             <ChartCard title={t("expenses.chartTitle")}>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={expenseGroups} barSize={32}>
-                  <XAxis
-                    dataKey="displayPeriod"
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={(v) => formatCurrency(v)}
-                    tick={{ fontSize: 11, fill: "#71717a" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={80}
-                  />
-                  <Tooltip
-                    formatter={(v) =>
-                      typeof v === "number" ? formatCurrency(v) : String(v)
-                    }
-                    cursor={{ fill: "#f4f4f5" }}
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid #e4e4e7",
-                    }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 12, color: "#52525b" }}
-                  />
-                  <Bar
-                    dataKey="payroll"
-                    name={t("expenses.payroll")}
-                    stackId="a"
-                    fill="#3b82f6"
-                    radius={[0, 0, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="inventory"
-                    name={t("expenses.inventory")}
-                    stackId="a"
-                    fill="#8b5cf6"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 240 }}>
+                <ResponsiveBar
+                  data={expenseGroups}
+                  keys={["payroll", "inventory"]}
+                  indexBy="displayPeriod"
+                  groupMode="stacked"
+                  margin={{ top: 10, right: 10, bottom: 60, left: 80 }}
+                  padding={0.4}
+                  borderRadius={4}
+                  colors={({ id }) => id === "payroll" ? "#3b82f6" : "#8b5cf6"}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => formatCurrency(Number(v)),
+                  }}
+                  enableLabel={false}
+                  legendLabel={(datum) =>
+                    datum.id === "payroll" ? t("expenses.payroll") : t("expenses.inventory")
+                  }
+                  legends={[{
+                    dataFrom: "keys",
+                    anchor: "bottom",
+                    direction: "row",
+                    itemWidth: 110,
+                    itemHeight: 16,
+                    itemsSpacing: 8,
+                    symbolSize: 8,
+                    symbolShape: "circle",
+                    itemTextColor: "#52525b",
+                    translateY: 50,
+                  }]}
+                  tooltip={({ id, indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {id === "payroll" ? t("expenses.payroll") : t("expenses.inventory")} ({indexValue}):{" "}
+                      <strong>{formatCurrency(value)}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
           )}
 

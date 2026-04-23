@@ -1,0 +1,36 @@
+// src/services/profile.ts
+import { apiClient } from "@/lib/api";
+import type { User } from "@/types";
+
+export interface UpdateProfilePayload {
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  description?: string;
+}
+
+export interface AvatarResponse {
+  message: string;
+  avatar_url: string;
+}
+
+export const profileService = {
+  get: (): Promise<User> =>
+    apiClient.get("/api/v1/profile").then((r) => r.data),
+
+  update: (data: UpdateProfilePayload): Promise<User> =>
+    apiClient.patch("/api/v1/profile", { profile: data }).then((r) => r.data),
+
+  uploadAvatar: (file: File): Promise<AvatarResponse> => {
+    const form = new FormData();
+    form.append("avatar", file);
+    return apiClient
+      .post("/api/v1/profile/avatar", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
+
+  deleteAvatar: (): Promise<{ message: string }> =>
+    apiClient.delete("/api/v1/profile/avatar").then((r) => r.data),
+};

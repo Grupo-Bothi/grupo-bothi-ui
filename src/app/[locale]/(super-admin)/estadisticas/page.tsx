@@ -5,18 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { companiesService } from "@/services/companies";
 import { getDashboardStatsByCompany } from "@/services/analytics";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { ResponsiveBar } from "@nivo/bar";
+import { ResponsivePie } from "@nivo/pie";
 import {
   Users,
   Package,
@@ -31,6 +21,27 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/types";
+
+const NIVO_THEME = {
+  axis: {
+    ticks: {
+      text: { fontSize: 11, fill: "#71717a" },
+      line: { strokeWidth: 0 },
+    },
+    domain: { line: { strokeWidth: 0 } },
+  },
+  grid: { line: { stroke: "#f4f4f5" } },
+} as const;
+
+const tooltipStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  background: "white",
+  border: "1px solid #e4e4e7",
+  borderRadius: 8,
+  fontSize: 12,
+  color: "#3f3f46",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+};
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#f59e0b",
@@ -303,49 +314,105 @@ export default function EstadisticasPage() {
           <SectionTitle>{t("sectionOrders")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
             <ChartCard title={t("chartOrdersByStatus")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={workOrderStatusData} barSize={32}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#71717a" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#71717a" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: "#f4f4f5" }} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {workOrderStatusData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsiveBar<{ name: string; value: number; fill: string }>
+                  data={workOrderStatusData}
+                  keys={["value"]}
+                  indexBy="name"
+                  margin={{ top: 10, right: 10, bottom: 36, left: 36 }}
+                  padding={0.4}
+                  borderRadius={4}
+                  colors={(bar) => bar.data.fill}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => (Number.isInteger(Number(v)) ? String(v) : ""),
+                  }}
+                  enableLabel={false}
+                  tooltip={({ indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {indexValue}: <strong>{value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <ChartCard title={t("chartOrdersByPriority")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={workOrderPriorityData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                    {workOrderPriorityData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "#52525b" }} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsivePie<{ id: string; value: number; color: string }>
+                  data={workOrderPriorityData.map((d) => ({
+                    id: d.name,
+                    value: d.value,
+                    color: d.fill,
+                  }))}
+                  innerRadius={0.65}
+                  padAngle={3}
+                  colors={(d) => d.data.color}
+                  enableArcLinkLabels={false}
+                  enableArcLabels={false}
+                  margin={{ top: 10, right: 10, bottom: 60, left: 10 }}
+                  theme={NIVO_THEME}
+                  legends={[
+                    {
+                      anchor: "bottom",
+                      direction: "row",
+                      itemWidth: 80,
+                      itemHeight: 16,
+                      itemsSpacing: 8,
+                      symbolSize: 8,
+                      symbolShape: "circle",
+                      itemTextColor: "#52525b",
+                    },
+                  ]}
+                  tooltip={({ datum }) => (
+                    <div style={tooltipStyle}>
+                      {datum.label}: <strong>{datum.value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
           </div>
 
           <SectionTitle>{t("sectionFinance")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
             <ChartCard title={t("chartTickets")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={ticketData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                    {ticketData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "#52525b" }} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsivePie<{ id: string; value: number; color: string }>
+                  data={ticketData.map((d) => ({
+                    id: d.name,
+                    value: d.value,
+                    color: d.fill,
+                  }))}
+                  innerRadius={0.65}
+                  padAngle={3}
+                  colors={(d) => d.data.color}
+                  enableArcLinkLabels={false}
+                  enableArcLabels={false}
+                  margin={{ top: 10, right: 10, bottom: 60, left: 10 }}
+                  theme={NIVO_THEME}
+                  legends={[
+                    {
+                      anchor: "bottom",
+                      direction: "row",
+                      itemWidth: 80,
+                      itemHeight: 16,
+                      itemsSpacing: 8,
+                      symbolSize: 8,
+                      symbolShape: "circle",
+                      itemTextColor: "#52525b",
+                    },
+                  ]}
+                  tooltip={({ datum }) => (
+                    <div style={tooltipStyle}>
+                      {datum.label}: <strong>{datum.value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <div className="bg-white rounded-xl border border-zinc-200 p-5 flex flex-col gap-4 justify-center">
@@ -363,7 +430,7 @@ export default function EstadisticasPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
-                    <span className="text-sm text-zinc-600">{t("pendingRevenue")}</span>
+                    <span className="text-sm text-zinc-600">{t("pendingRevenueLabel")}</span>
                   </div>
                   <span className="text-sm font-medium text-zinc-900">
                     {formatCurrency(data?.tickets.pending_revenue ?? 0)}
@@ -382,18 +449,30 @@ export default function EstadisticasPage() {
           <SectionTitle>{t("sectionAttendance")}</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("chartAttendanceToday")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={attendanceTodayData} barSize={40}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#71717a" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#71717a" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: "#f4f4f5" }} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {attendanceTodayData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: 220 }}>
+                <ResponsiveBar<{ name: string; value: number; fill: string }>
+                  data={attendanceTodayData}
+                  keys={["value"]}
+                  indexBy="name"
+                  margin={{ top: 10, right: 10, bottom: 36, left: 36 }}
+                  padding={0.35}
+                  borderRadius={4}
+                  colors={(bar) => bar.data.fill}
+                  theme={NIVO_THEME}
+                  axisBottom={{ tickSize: 0, tickPadding: 5 }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 5,
+                    format: (v) => (Number.isInteger(Number(v)) ? String(v) : ""),
+                  }}
+                  enableLabel={false}
+                  tooltip={({ indexValue, value }) => (
+                    <div style={tooltipStyle}>
+                      {indexValue}: <strong>{value}</strong>
+                    </div>
+                  )}
+                />
+              </div>
             </ChartCard>
 
             <div className="bg-white rounded-xl border border-zinc-200 p-5 flex flex-col gap-4 justify-center">

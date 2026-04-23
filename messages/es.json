@@ -30,7 +30,7 @@
     "passwordRequired": "Contraseña requerida",
     "heroTitle": "Tu negocio,",
     "heroTitleHighlight": "bajo control.",
-    "heroSubtitle": "Gestión integral para restaurantes y pymes. Inventario, personal, órdenes y reportes en un solo lugar.",
+    "heroSubtitle": "Gestión integral para tu negocio. Inventario, personal, órdenes y reportes en un solo lugar.",
     "copyright": "© {year} Bothi Soluciones · Sistema ERP",
     "feature1Label": "Control de inventario",
     "feature1Desc": "Stock en tiempo real para cocina y almacén",
@@ -76,6 +76,7 @@
     "ticketsPending": "{count} pendientes",
     "totalRevenue": "Ingresos totales",
     "pendingRevenue": "{amount} pendientes",
+    "pendingRevenueLabel": "Pendiente",
     "totalInventory": "Productos en inventario",
     "inventorySub": "{available} disponibles",
     "lowStock": "Stock bajo",
@@ -398,7 +399,15 @@
     "statuses": {
       "pending": "Pendiente",
       "paid": "Pagado"
-    }
+    },
+    "sendWhatsapp": "Enviar por WhatsApp",
+    "sendWhatsappTitle": "Enviar ticket por WhatsApp",
+    "sendWhatsappDesc": "Ingresa el número de teléfono del cliente para enviarle el ticket.",
+    "phonePlaceholder": "Ej: 5219876543210",
+    "send": "Enviar",
+    "whatsappSent": "Ticket enviado por WhatsApp",
+    "whatsappSkip": "Ahora no",
+    "resendWhatsapp": "Reenviar por WhatsApp"
   },
   "subscription": {
     "nav": "Suscripción",
@@ -446,8 +455,27 @@
     "tabProfile": "Perfil",
     "tabSubscription": "Suscripción",
     "name": "Nombre",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
     "email": "Correo electrónico",
-    "role": "Rol"
+    "role": "Rol",
+    "phone": "Teléfono",
+    "description": "Descripción",
+    "phonePlaceholder": "55 1234 5678",
+    "descriptionPlaceholder": "Escribe algo sobre ti...",
+    "firstNamePlaceholder": "Juan",
+    "lastNamePlaceholder": "Pérez",
+    "editSection": "Información personal",
+    "accountSection": "Información de la cuenta",
+    "avatarSection": "Foto de perfil",
+    "changeAvatar": "Cambiar foto",
+    "deleteAvatar": "Eliminar foto",
+    "saveSuccess": "Perfil actualizado",
+    "avatarUpdated": "Foto actualizada",
+    "avatarDeleted": "Foto eliminada",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "status": "Estado"
   },
   "adminSubscriptions": {
     "pageTitle": "Suscripciones",

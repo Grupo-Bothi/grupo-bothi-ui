@@ -30,7 +30,7 @@
     "passwordRequired": "Password required",
     "heroTitle": "Your business,",
     "heroTitleHighlight": "under control.",
-    "heroSubtitle": "All-in-one management for restaurants and SMBs. Inventory, staff, orders and reports in one place.",
+    "heroSubtitle": "All-in-one management for bussinnes. Inventory, staff, orders and reports in one place.",
     "copyright": "© {year} Bothi Soluciones · ERP System",
     "feature1Label": "Inventory control",
     "feature1Desc": "Real-time stock for kitchen and warehouse",
@@ -76,6 +76,7 @@
     "ticketsPending": "{count} pending",
     "totalRevenue": "Total revenue",
     "pendingRevenue": "{amount} pending",
+    "pendingRevenueLabel": "Pending",
     "totalInventory": "Products in inventory",
     "inventorySub": "{available} available",
     "lowStock": "Low stock",
@@ -398,7 +399,15 @@
     "statuses": {
       "pending": "Pending",
       "paid": "Paid"
-    }
+    },
+    "sendWhatsapp": "Send via WhatsApp",
+    "sendWhatsappTitle": "Send ticket via WhatsApp",
+    "sendWhatsappDesc": "Enter the customer's phone number to send them the ticket.",
+    "phonePlaceholder": "E.g. 5219876543210",
+    "send": "Send",
+    "whatsappSent": "Ticket sent via WhatsApp",
+    "whatsappSkip": "Not now",
+    "resendWhatsapp": "Resend via WhatsApp"
   },
   "subscription": {
     "nav": "Subscription",
@@ -446,8 +455,27 @@
     "tabProfile": "Profile",
     "tabSubscription": "Subscription",
     "name": "Name",
+    "firstName": "First name",
+    "lastName": "Last name",
     "email": "Email",
-    "role": "Role"
+    "role": "Role",
+    "phone": "Phone",
+    "description": "Description",
+    "phonePlaceholder": "55 1234 5678",
+    "descriptionPlaceholder": "Write something about you...",
+    "firstNamePlaceholder": "John",
+    "lastNamePlaceholder": "Doe",
+    "editSection": "Personal information",
+    "accountSection": "Account information",
+    "avatarSection": "Profile photo",
+    "changeAvatar": "Change photo",
+    "deleteAvatar": "Delete photo",
+    "saveSuccess": "Profile updated",
+    "avatarUpdated": "Photo updated",
+    "avatarDeleted": "Photo deleted",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status"
   },
   "adminSubscriptions": {
     "pageTitle": "Subscriptions",

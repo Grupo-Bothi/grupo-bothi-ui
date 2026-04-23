@@ -30,4 +30,7 @@ export const ticketsService = {
     apiClient
       .get(`/api/v1/tickets/${id}/download`, { responseType: "blob" })
       .then((r) => r.data),
+
+  sendWhatsapp: (id: number, phone: string): Promise<void> =>
+    apiClient.post(`/api/v1/tickets/${id}/send_whatsapp`, { phone }).then((r) => r.data),
 };
