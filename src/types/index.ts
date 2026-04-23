@@ -102,6 +102,18 @@ export interface ApiError {
   details?: string | string[];
 }
 
+export interface Subscription {
+  id: number;
+  status: "trial" | "trialing" | "active" | "expired" | "cancelled";
+  plan: "business" | "enterprise" | null;
+  trial_ends_at?: string;
+  current_period_end?: string;
+}
+
+export interface CheckoutResponse {
+  checkout_url: string;
+}
+
 export interface WorkOrderItem {
   id: number;
   description: string;

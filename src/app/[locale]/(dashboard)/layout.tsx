@@ -2,6 +2,8 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
+import { TrialBanner } from "@/components/layout/trial-banner";
+import { SubscriptionGuard } from "@/components/layout/subscription-guard";
 
 export default function DashboardLayout({
   children,
@@ -14,6 +16,8 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0">
           <Header />
+          <TrialBanner />
+          <SubscriptionGuard />
           <main className="flex-1 p-8 overflow-auto">{children}</main>
         </div>
       </div>

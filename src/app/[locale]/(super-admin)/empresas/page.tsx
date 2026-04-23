@@ -2,7 +2,7 @@
 "use client";
 import { useRef, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { Plus, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,11 @@ import { DataTable } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { CompanyForm } from "@/components/companies/company-form";
 import { CompanyDeleteDialog } from "@/components/companies/company-delete-dialog";
-import { getCompanyColumns } from "@/components/companies/columns";
+import { getCompanyColumns, type CompanyRow } from "@/components/companies/columns";
 import { companiesService } from "@/services/companies";
+import { getCompanySubscription } from "@/services/subscription";
 import { usePagination } from "@/hooks/use-pagination";
+import { useAppRouter } from "@/hooks/use-router";
 import type { Company } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -20,6 +22,7 @@ const PAGE_SIZE = 10;
 export default function EmpresasPage() {
   const t = useTranslations("companies");
   const tc = useTranslations("common");
+  const router = useAppRouter();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,6 +38,26 @@ export default function EmpresasPage() {
   });
 
   const companies: Company[] = data?.results ?? [];
+
+  const subscriptionQueries = useQueries({
+    queries: companies.map((company) => ({
+      queryKey: ["company-subscription", company.id],
+      queryFn: () => getCompanySubscription(company.id),
+      retry: false,
+      staleTime: 2 * 60 * 1000,
+    })),
+  });
+
+  const rows: CompanyRow[] = useMemo(
+    () =>
+      companies.map((company, i) => ({
+        company,
+        subscription: subscriptionQueries[i]?.data ?? null,
+        isLoadingSub: subscriptionQueries[i]?.isLoading ?? true,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [companies, subscriptionQueries.map((q) => q.data).join(",")],
+  );
 
   function handleSearch(value: string) {
     setSearch(value);
@@ -58,6 +81,7 @@ export default function EmpresasPage() {
           setFormOpen(true);
         },
         onDelete: (company) => setDeleting(company),
+        onViewSubscription: () => router.push("/suscripciones"),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -101,7 +125,7 @@ export default function EmpresasPage() {
       {/* Table */}
       <DataTable
         columns={columns}
-        data={companies}
+        data={rows}
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
         loadingMessage={tc("loading")}

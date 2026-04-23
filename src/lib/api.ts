@@ -15,8 +15,10 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers["locale"] = getLocale();
-  const companyId = localStorage.getItem("selected_company_id");
-  if (companyId) config.headers["X-Company-Id"] = companyId;
+  if (!config.headers["X-Company-Id"]) {
+    const companyId = localStorage.getItem("selected_company_id");
+    if (companyId) config.headers["X-Company-Id"] = companyId;
+  }
   return config;
 });
 
@@ -36,6 +38,11 @@ apiClient.interceptors.response.use(
       } else {
         toast.error(message ?? t.unauthorized);
       }
+      return Promise.reject(error);
+    }
+
+    if (status === 403 && err?.code === "subscription_expired") {
+      toast.error(t.subscriptionExpired);
       return Promise.reject(error);
     }
 

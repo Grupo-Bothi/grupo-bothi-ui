@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Building2, Users, ShieldCheck } from "lucide-react";
+import { Building2, Users, ShieldCheck, CreditCard } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +23,11 @@ export function SuperAdminSidebar() {
       href: `/${locale}/usuarios`,
       label: t("users"),
       icon: Users,
+    },
+    {
+      href: `/${locale}/suscripciones`,
+      label: t("subscriptions"),
+      icon: CreditCard,
     },
   ];
 

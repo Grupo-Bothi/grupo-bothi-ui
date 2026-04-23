@@ -13,6 +13,7 @@ import {
 import { LocaleSwitcher } from "./locale-switcher";
 import { useSidebar } from "./sidebar-context";
 import { LogOut, Menu, UserRound } from "lucide-react";
+import { useAppRouter } from "@/hooks/use-router";
 
 function getInitials(firstName?: string, lastName?: string) {
   return `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase() || "?";
@@ -22,6 +23,7 @@ export function Header() {
   const t = useTranslations("nav");
   const { user, logout } = useAuthStore();
   const { toggle } = useSidebar();
+  const router = useAppRouter();
 
   return (
     <header className="h-14 px-4 border-b border-zinc-200 bg-white flex items-center justify-between gap-4 shrink-0">
@@ -53,7 +55,7 @@ export function Header() {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem className="gap-2">
+          <DropdownMenuItem className="gap-2" onClick={() => router.push("/perfil")}>
             <UserRound size={14} />
             {t("profile")}
           </DropdownMenuItem>
