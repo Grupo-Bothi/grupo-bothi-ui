@@ -181,6 +181,70 @@ export interface DashboardStats {
   };
 }
 
+export interface ReportSummary {
+  income: {
+    paid_revenue: number;
+    pending_revenue: number;
+    total_revenue: number;
+  };
+  work_orders: {
+    total: number;
+    by_status: Record<string, number>;
+    total_billed: number;
+  };
+  expenses: {
+    payroll_total: number;
+    inventory_cost: number;
+    total: number;
+  };
+  attendance: {
+    normal: number;
+    late: number;
+    absent: number;
+    total: number;
+  };
+}
+
+export interface IncomePaidTicket {
+  id: number;
+  folio: string;
+  total: number;
+  paid_at: string;
+  employee?: { id: number; name: string };
+  work_order?: { id: number; title: string };
+}
+
+export interface IncomeReport {
+  groups: Array<{ period: string; total: number; count: number }>;
+  tickets: IncomePaidTicket[];
+}
+
+export interface ExpensesReport {
+  groups: Array<{ period: string; payroll: number; inventory: number; total: number }>;
+  payroll: Array<{ id: number; name: string; salary: number; status: string }>;
+  inventory_movements: Array<{
+    id: number;
+    product: { id: number; name: string; sku: string };
+    qty: number;
+    unit_cost: number;
+    total_cost: number;
+    created_at: string;
+  }>;
+}
+
+export interface PayrollEmployee {
+  id: number;
+  name: string;
+  salary: number;
+  days_present: number;
+  hours_worked: number;
+  attendance: { normal: number; late: number; absent: number };
+}
+
+export interface PayrollReport {
+  employees: PayrollEmployee[];
+}
+
 export interface TicketItem {
   id: number;
   description: string;

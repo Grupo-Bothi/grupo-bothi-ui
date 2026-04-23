@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Building2, Users, ShieldCheck, CreditCard, BarChart2 } from "lucide-react";
+import { Building2, Users, ShieldCheck, CreditCard, BarChart2, FileBarChart2 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,11 @@ export function SuperAdminSidebar() {
       href: `/${locale}/suscripciones`,
       label: t("subscriptions"),
       icon: CreditCard,
+    },
+    {
+      href: `/${locale}/reportes`,
+      label: t("reports"),
+      icon: FileBarChart2,
     },
   ];
 

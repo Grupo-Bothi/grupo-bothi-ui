@@ -6,18 +6,19 @@ import { useTranslations, useLocale } from "next-intl";
 import {
   Users,
   Package,
-  LayoutDashboard,
   Building2,
   ClipboardList,
   Receipt,
   Home,
   BarChart2,
+  FileBarChart2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
 const ANALYTICS_ROLES = new Set(["admin", "owner", "manager"]);
+const REPORTS_ROLES = new Set(["admin", "owner"]);
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -27,6 +28,7 @@ export function Sidebar() {
   const { open } = useSidebar();
 
   const showAnalytics = !!user && ANALYTICS_ROLES.has(user.role);
+  const showReports = !!user && REPORTS_ROLES.has(user.role);
 
   const NAV = [
     {
@@ -55,6 +57,15 @@ export function Sidebar() {
       label: t("tickets"),
       icon: Receipt,
     },
+    ...(showReports
+      ? [
+          {
+            href: `/${locale}/reportes`,
+            label: t("reports"),
+            icon: FileBarChart2,
+          },
+        ]
+      : []),
   ];
 
   return (

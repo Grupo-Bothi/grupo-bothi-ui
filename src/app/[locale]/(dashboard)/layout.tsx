@@ -1,5 +1,5 @@
 // src/app/[locale]/(dashboard)/layout.tsx
-import { Sidebar } from "@/components/layout/sidebar";
+import { LayoutSidebar } from "@/components/layout/layout-sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { TrialBanner } from "@/components/layout/trial-banner";
@@ -13,7 +13,7 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-zinc-50">
-        <Sidebar />
+        <LayoutSidebar />
         <div className="flex flex-col flex-1 min-w-0">
           <Header />
           <TrialBanner />
